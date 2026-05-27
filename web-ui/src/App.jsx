@@ -150,7 +150,11 @@ function App() {
         {
           text: userMessage.text,
           npc_id: activeNpc,
-          world_state: worldState,
+          // WRAP the string state into a proper JSON object here:
+          world_state: {
+            environment: "Web Browser UI",
+            user_notes: worldState
+          },
           session_id: 'default_user',
         },
         {
@@ -286,9 +290,9 @@ function App() {
           <button
             className="danger-button"
             onClick={handleReset}
-            aria-label={`Wipe ${npcDetails[activeNpc].name}'s memory`}
+            aria-label={`Wipe memory for ${npcDetails[activeNpc].name}`}
           >
-            ⚠️ Wipe {npcDetails[activeNpc].name}&apos;s Memory
+            ⚠️ Clear Memory ({npcDetails[activeNpc].name})
           </button>
         </aside>
 
