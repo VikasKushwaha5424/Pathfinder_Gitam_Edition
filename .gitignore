@@ -1,38 +1,92 @@
-# --- OS Generated ---
+# ==========================================
+# --- OS Generated Files ---
+# ==========================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
+# ==========================================
 # --- Python Backend ---
+# ==========================================
 backend/venv/
+backend/env/
 backend/__pycache__/
+backend/**/*.pyc
 backend/.env
 backend/.pytest_cache/
+backend/.mypy_cache/
+backend/pip-log.txt
+backend/pip-delete-this-directory.txt
 
+# ==========================================
 # --- React Web UI ---
+# ==========================================
 web-ui/node_modules/
 web-ui/dist/
+web-ui/build/
 web-ui/.env
 web-ui/.env.local
+web-ui/.env.development.local
+web-ui/.env.test.local
+web-ui/.env.production.local
+web-ui/npm-debug.log*
+web-ui/yarn-debug.log*
+web-ui/yarn-error.log*
 
+# ==========================================
 # --- Unity XR Frontend (Phase 4 Prep) ---
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-Logs/
-UserSettings/
-*.csproj
-*.unityproj
-*.sln
-*.suo
-*.tmp
-*.user
-*.userprefs
-*.pidb
-*.booproj
-*.svd
-*.pdb
-*.mdb
-*.opendb
-*.VC.db
+# ==========================================
+# Core Unity generated folders (Gigabytes of temporary data)
+unity-client/[Ll]ibrary/
+unity-client/[Tt]emp/
+unity-client/[Oo]bj/
+unity-client/[Bb]uild/
+unity-client/[Bb]uilds/
+unity-client/[Ll]ogs/
+unity-client/[Uu]ser[Ss]ettings/
+
+# Heavy captures and recordings
+unity-client/[Mm]emoryCaptures/
+unity-client/[Rr]ecordings/
+
+# Unity IDE, Cache, and Project Files
+unity-client/.vs/
+unity-client/.gradle/
+unity-client/ExportedObj/
+unity-client/.consulo/
+unity-client/*.csproj
+unity-client/*.unityproj
+unity-client/*.sln
+unity-client/*.suo
+unity-client/*.tmp
+unity-client/*.user
+unity-client/*.userprefs
+unity-client/*.pidb
+unity-client/*.booproj
+unity-client/*.svd
+unity-client/*.pdb
+unity-client/*.mdb
+unity-client/*.opendb
+unity-client/*.VC.db
+
+# Unity generated meta files for ignored items
+unity-client/*.pidb.meta
+unity-client/*.pdb.meta
+unity-client/*.mdb.meta
+
+# Crash reports and Executable Builds
+unity-client/sysinfo.txt
+unity-client/*.apk
+unity-client/*.aab
+unity-client/*.unitypackage
+unity-client/*.app
+unity-client/crashlytics-build.properties
+
+# Packed Addressables
+unity-client/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+unity-client/[Aa]ssets/[Ss]treamingAssets/aa.meta
+unity-client/[Aa]ssets/[Ss]treamingAssets/aa/*

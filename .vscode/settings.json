@@ -4,5 +4,23 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.formatOnSave": true
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/__pycache__": true,
+        "unity-client/Library": true,
+        "unity-client/Temp": true,
+        "unity-client/Obj": true,
+        "unity-client/Build": true,
+        "unity-client/Logs": true,
+        "unity-client/UserSettings": true,
+        "unity-client/**/*.meta": true,
+        "unity-client/**/*.csproj": true,
+        "unity-client/**/*.sln": true
+    },
+    "search.exclude": {
+        "unity-client/Library": true,
+        "unity-client/**/*.meta": true
     }
 }
