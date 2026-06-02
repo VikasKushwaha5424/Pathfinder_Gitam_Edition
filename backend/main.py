@@ -84,7 +84,7 @@ async def transcribe_audio(base64_audio: str) -> str:
             # UPGRADED: Added vad_filter to ignore silence/static and explicitly set language to English
             segments, _ = stt_model.transcribe(
                 temp_path, 
-                beam_size=5,
+                beam_size=1,
                 language="en",
                 vad_filter=True
             )
@@ -195,10 +195,16 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
 
             world_state_json = json.dumps(world_state)
 
+            stt_time = 0
+            llm_time = 0
+            tts_time = 0
+
             # --- ROUTE INCOMING PAYLOAD BASED ON EVENT TYPE ---
             if event_type == "audio":
                 print("🎙️ Receiving audio payload from Unity...")
+                stt_start = time.time()
                 user_text = await transcribe_audio(payload)
+                stt_time = time.time() - stt_start
                 
                 # If the VAD filter strips out all the noise and leaves nothing, skip generating a response
                 if not user_text:
@@ -206,7 +212,7 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
                     await websocket.send_json({"type": "done"})
                     continue
                     
-                print(f"📝 Transcribed: {user_text}")
+                print(f"📝 Transcribed: {user_text} (STT: {stt_time*1000:.0f}ms)")
 
                 # Send the transcript back so Unity UI can display what it heard
                 await websocket.send_json(
@@ -229,18 +235,17 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
                 )
             )
 
-            if len(history) > 10:
-                del history[:-10]
-
+            llm_start = time.time()
             response = await client.aio.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=history,
                 config=types.GenerateContentConfig(
                     system_instruction=system_prompt,
-                    max_output_tokens=150,
-                    temperature=0.7,
+                    max_output_tokens=300,
+                    temperature=0.8,
                 ),
             )
+            llm_time = time.time() - llm_start
 
             history.append(
                 types.Content(
@@ -248,14 +253,17 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
                 )
             )
 
+            if len(history) > 10:
+                del history[:-10]
+
             await websocket.send_json({"type": "text", "content": response.text})
 
             # 5. STREAM AUDIO AS BASE64 CHUNKS (Transcoded to Raw PCM)
+            tts_start = time.time()
             spoken_text = clean_text_for_voice(response.text)
             voice = NPC_VOICES.get(npc, "en-US-AriaNeural")
-
+            ffmpeg_process = None
             try:
-                # Start FFmpeg subprocess
                 ffmpeg_process = await asyncio.create_subprocess_exec(
                     "ffmpeg.exe",
                     "-i",
@@ -265,16 +273,15 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
                     "-acodec",
                     "pcm_f32le",
                     "-ar",
-                    "24000",  # Match edge-tts sample rate
+                    "24000",
                     "-ac",
-                    "1",  # Mono
+                    "1",
                     "pipe:1",
                     stdin=asyncio.subprocess.PIPE,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.DEVNULL,
                 )
 
-                # Task 1: Feed MP3 stream into FFmpeg
                 async def push_audio():
                     communicate = edge_tts.Communicate(spoken_text, voice)
                     async for chunk in communicate.stream():
@@ -284,14 +291,11 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
                     ffmpeg_process.stdin.close()
                     await ffmpeg_process.stdin.wait_closed()
 
-                # Task 2: Read PCM stream from FFmpeg and send to Unity
                 async def read_audio():
                     while True:
-                        # Read 4KB chunks of pure PCM float data
                         pcm_chunk = await ffmpeg_process.stdout.read(4096)
                         if not pcm_chunk:
                             break
-
                         audio_b64 = base64.b64encode(pcm_chunk).decode("utf-8")
                         await websocket.send_json(
                             {
@@ -302,22 +306,26 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
                             }
                         )
 
-                # Run both tasks concurrently to achieve zero-latency streaming
                 await asyncio.gather(push_audio(), read_audio())
 
             except Exception as stream_error:
                 print(f"❌ TTS WebSocket Stream interrupted: {stream_error}")
-                traceback.print_exc()  # Prints exactly what failed on what line
+                traceback.print_exc()
                 await websocket.send_json(
                     {"type": "error", "message": "Audio stream failed."}
                 )
+            finally:
+                if ffmpeg_process is not None and ffmpeg_process.returncode is None:
+                    ffmpeg_process.kill()
+                    await ffmpeg_process.wait()
+
+            tts_time = time.time() - tts_start
+            print(f"[TIMING] STT: {stt_time*1000:.0f}ms | LLM: {llm_time*1000:.0f}ms | TTS: {tts_time*1000:.0f}ms")
 
             await websocket.send_json({"type": "done"})
 
     except WebSocketDisconnect:
         print(f"Unity Client {session_id} disconnected.")
-        if session_id in session_memories:
-            del session_memories[session_id]
 
     except Exception as e:
         print(f"WebSocket Error: {e}")
@@ -377,14 +385,11 @@ async def generate_response(user_input: UserInput):
             )
         )
 
-        if len(history) > 10:
-            del history[:-10]
-
         response = await client.aio.models.generate_content(
             model="gemini-2.5-flash",
             contents=history,
             config=types.GenerateContentConfig(
-                system_instruction=system_prompt, max_output_tokens=150, temperature=0.7
+                system_instruction=system_prompt, max_output_tokens=300, temperature=0.8
             ),
         )
 
@@ -393,6 +398,9 @@ async def generate_response(user_input: UserInput):
                 role="model", parts=[types.Part.from_text(text=response.text)]
             )
         )
+
+        if len(history) > 10:
+            del history[:-10]
 
         spoken_text = clean_text_for_voice(response.text)
         voice = NPC_VOICES.get(npc, "en-US-AriaNeural")
