@@ -1,0 +1,50 @@
+﻿[
+    {
+        "poster":  "poster-library.svg",
+        "name":  "Library",
+        "id":  "library",
+        "index":  0
+    },
+    {
+        "poster":  "poster-canteen.svg",
+        "name":  "Canteen",
+        "id":  "canteen",
+        "index":  1
+    },
+    {
+        "poster":  "poster-csdept.svg",
+        "name":  "CS Department",
+        "id":  "csdept",
+        "index":  2
+    },
+    {
+        "poster":  "poster-admin_block.svg",
+        "name":  "Admin Block",
+        "id":  "admin_block",
+        "index":  3
+    },
+    {
+        "poster":  "poster-sports_complex.svg",
+        "name":  "Sports Complex",
+        "id":  "sports_complex",
+        "index":  4
+    },
+    {
+        "poster":  "poster-auditorium.svg",
+        "name":  "Auditorium",
+        "id":  "auditorium",
+        "index":  5
+    },
+    {
+        "poster":  "poster-hostel_block.svg",
+        "name":  "Hostels",
+        "id":  "hostel_block",
+        "index":  6
+    },
+    {
+        "poster":  "poster-parking.svg",
+        "name":  "Parking",
+        "id":  "parking",
+        "index":  7
+    }
+]

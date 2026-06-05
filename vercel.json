@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd web-ui && npm install && npm run build",
+  "outputDirectory": "web-ui/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "installCommand": "cd web-ui && npm install"
+}

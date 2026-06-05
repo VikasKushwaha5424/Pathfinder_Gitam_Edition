@@ -7,7 +7,7 @@ import json
 import base64
 import tempfile
 import traceback
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -30,12 +30,14 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
     raise ValueError("GEMINI_API_KEY is missing from the .env file!")
 
+CORS_ORIGIN = os.getenv("CORS_ORIGIN", "*")
+
 client = genai.Client(api_key=API_KEY)
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[CORS_ORIGIN] if CORS_ORIGIN != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -71,17 +73,14 @@ session_memories = {}
 
 
 # --- HELPER FUNCTIONS ---
-async def transcribe_audio(base64_audio: str) -> str:
-    """Decodes base64 audio and transcribes it locally using faster-whisper."""
+async def _transcribe_bytes(audio_bytes: bytes) -> str:
+    """Transcribe raw audio bytes using faster-whisper."""
     try:
-        audio_data = base64.b64decode(base64_audio)
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
-            temp_audio.write(audio_data)
+            temp_audio.write(audio_bytes)
             temp_path = temp_audio.name
 
-        # Run the blocking STT model in a separate thread so it doesn't freeze FastAPI
         def run_stt():
-            # UPGRADED: Added vad_filter to ignore silence/static and explicitly set language to English
             segments, _ = stt_model.transcribe(
                 temp_path, 
                 beam_size=1,
@@ -91,11 +90,20 @@ async def transcribe_audio(base64_audio: str) -> str:
             return "".join([segment.text for segment in segments])
 
         transcript = await asyncio.to_thread(run_stt)
-
         os.remove(temp_path)
         return transcript.strip()
     except Exception as e:
         print(f"STT Error: {e}")
+        return "[Error transcribing audio]"
+
+
+async def transcribe_audio(base64_audio: str) -> str:
+    """Decodes base64 audio and transcribes it using faster-whisper."""
+    try:
+        audio_data = base64.b64decode(base64_audio)
+        return await _transcribe_bytes(audio_data)
+    except Exception as e:
+        print(f"STT Decode Error: {e}")
         return "[Error transcribing audio]"
 
 
@@ -132,12 +140,30 @@ class UserInput(BaseModel):
     world_state: dict = Field(
         default_factory=dict
     )  # UPGRADED to accept complex JSON telemetry
+    location: str = ""
     session_id: str = "default_user"
+
+
+CAMPUS_LOCATIONS = {
+    "library": "GITAM Central Library — quiet study zones, book sections, and digital resources",
+    "admin_block": "Administrative Block — admissions, fees, registrar, and student services",
+    "cse_department": "Computer Science & Engineering Department — labs, faculty offices, and lecture halls",
+    "canteen": "University Canteen & Food Court — snacks, meals, and refreshments",
+    "sports_complex": "Sports Complex — indoor courts, gymnasium, and outdoor fields",
+    "auditorium": "Main Auditorium — events, seminars, and cultural programs",
+    "hostel_block": "Student Hostels — accommodation, warden office, and common rooms",
+    "parking": "Campus Parking — visitor parking, bike stands, and shuttle stop",
+}
 
 
 @app.get("/")
 async def root():
     return {"message": "System Online: XR-NPC Backend running with HTTP & WebSockets!"}
+
+
+@app.get("/locations")
+async def get_locations():
+    return CAMPUS_LOCATIONS
 
 
 # --- 1. RESET ENDPOINT ---
@@ -157,6 +183,19 @@ async def reset_memory(reset_input: ResetInput):
             "message": f"[{npc.upper()}] Memory wiped successfully for session {session}."
         }
     return {"message": "No memory found to wipe."}
+
+
+# =====================================================================
+# WEB UI INTEGRATION: AUDIO TRANSCRIPTION ENDPOINT
+# =====================================================================
+@app.post("/transcribe")
+async def transcribe_upload(
+    file: UploadFile = File(...),
+    location: str = Form(""),
+):
+    audio_bytes = await file.read()
+    transcript = await _transcribe_bytes(audio_bytes)
+    return {"transcript": transcript, "location": location, "filename": file.filename}
 
 
 # =====================================================================
@@ -373,8 +412,16 @@ async def generate_response(user_input: UserInput):
     system_prompt = NPC_PROMPTS[npc]
 
     try:
-        # Format the dictionary dynamically sent by React into a clean JSON string
-        world_state_json = json.dumps(user_input.world_state)
+        world_state = dict(user_input.world_state)
+        if user_input.location:
+            world_state["location"] = user_input.location
+            location_desc = CAMPUS_LOCATIONS.get(
+                user_input.location,
+                f"the {user_input.location.replace('_', ' ').title()} area",
+            )
+            world_state["location_description"] = location_desc
+
+        world_state_json = json.dumps(world_state)
 
         injected_prompt = (
             f"[System World State: {world_state_json}] User says: {user_input.text}"
