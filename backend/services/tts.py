@@ -54,10 +54,13 @@ async def stream_tts_pcm(text: str, voice: str, chunk_size: int = 4096):
                 "sample_rate": 24000,
             }
 
+    push_task = asyncio.create_task(_push())
+
     try:
         async for chunk in _read():
             yield chunk
     except Exception as e:
+        push_task.cancel()
         print(f"TTS stream error: {e}")
         traceback.print_exc()
     finally:

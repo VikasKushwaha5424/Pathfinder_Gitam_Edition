@@ -3,7 +3,6 @@ import time
 import traceback
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from google.genai import types
 
 import state
 from npcs import NPC_PROMPTS, NPC_VOICES, session_memories, get_or_create_session
@@ -57,28 +56,31 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
                     continue
                 prompt = f"[System World State: {world_state}] User says: {payload}"
 
-            history.append(types.Content(role="user", parts=[types.Part.from_text(text=prompt)]))
+            messages = [{"role": "system", "content": system_prompt}]
+            for msg in history[-10:]:
+                messages.append(msg)
+            messages.append({"role": "user", "content": prompt})
 
             t0 = time.time()
-            response = await state.client.aio.models.generate_content(
-                model=state.gemini_model,
-                contents=history,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    max_output_tokens=300,
-                    temperature=0.8,
-                ),
+            response = await state.groq_client.chat.completions.create(
+                model=state.groq_model,
+                messages=messages,
+                temperature=0.8,
+                max_tokens=300,
             )
             llm_ms = (time.time() - t0) * 1000
 
-            history.append(types.Content(role="model", parts=[types.Part.from_text(text=response.text)]))
+            reply_text = response.choices[0].message.content
+
+            history.append({"role": "user", "content": prompt})
+            history.append({"role": "assistant", "content": reply_text})
             if len(history) > 10:
                 del history[:-10]
 
-            await websocket.send_json({"type": "text", "content": response.text})
+            await websocket.send_json({"type": "text", "content": reply_text})
 
             t0 = time.time()
-            spoken = clean_text(response.text)
+            spoken = clean_text(reply_text)
             voice = NPC_VOICES.get(npc, "en-US-AriaNeural")
 
             try:
@@ -100,9 +102,9 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
         print(f"Client {session_id} disconnected.")
     except Exception as e:
         print(f"WebSocket error: {e}")
-        if history and history[-1].role == "model":
+        if history and history[-1].get("role") == "assistant":
             history.pop()
-        if history and history[-1].role == "user":
+        if history and history[-1].get("role") == "user":
             history.pop()
         try:
             await websocket.send_json({"type": "error", "message": str(e)})

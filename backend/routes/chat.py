@@ -3,7 +3,6 @@ import json
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from google.genai import types
 
 import state
 from models import UserInput, ResetInput
@@ -44,37 +43,40 @@ async def generate_response(user_input: UserInput):
             )
 
         injected = f"[System World State: {json.dumps(world_state)}] User says: {user_input.text}"
-        history.append(types.Content(role="user", parts=[types.Part.from_text(text=injected)]))
 
-        response = await state.client.aio.models.generate_content(
-            model=state.gemini_model,
-            contents=history,
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
-                max_output_tokens=300,
-                temperature=0.8,
-            ),
-            timeout=15,
+        messages = [{"role": "system", "content": system_prompt}]
+        for msg in history[-10:]:
+            messages.append(msg)
+        messages.append({"role": "user", "content": injected})
+
+        response = await state.groq_client.chat.completions.create(
+            model=state.groq_model,
+            messages=messages,
+            temperature=0.8,
+            max_tokens=300,
         )
 
-        history.append(types.Content(role="model", parts=[types.Part.from_text(text=response.text)]))
+        reply_text = response.choices[0].message.content
+
+        history.append({"role": "user", "content": injected})
+        history.append({"role": "assistant", "content": reply_text})
         if len(history) > 10:
             del history[:-10]
 
-        header = response.text[:1000] + "..." if len(response.text) > 1000 else response.text
+        header = reply_text[:1000] + "..." if len(reply_text) > 1000 else reply_text
         encoded = urllib.parse.quote(header)
 
     except Exception as e:
-        if history and history[-1].role == "model":
+        if history and history[-1].get("role") == "assistant":
             history.pop()
-        if history and history[-1].role == "user":
+        if history and history[-1].get("role") == "user":
             history.pop()
         err = str(e).lower()
         if "429" in err or "quota" in err or "exhausted" in err:
             raise HTTPException(status_code=429, detail="[ERROR_QUOTA_EXHAUSTED]")
         raise HTTPException(status_code=500, detail=str(e))
 
-    spoken = clean_text(response.text)
+    spoken = clean_text(reply_text)
     voice = NPC_VOICES.get(npc, "en-US-AriaNeural")
 
     audio_bytes = bytearray()

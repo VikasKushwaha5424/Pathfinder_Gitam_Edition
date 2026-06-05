@@ -1,6 +1,6 @@
-import os
 from typing import Optional
-from google.genai import Client as GenaiClient
+from openai import AsyncOpenAI
 
-client: Optional[GenaiClient] = None
-gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+groq_client: Optional[AsyncOpenAI] = None
+groq_model: str = "llama-3.1-8b-instant"
+session_history: dict[str, list[dict]] = {}

@@ -4,7 +4,7 @@
 - GitHub repository with the code pushed
 - Vercel account (for frontend)
 - Render account (for backend)
-- Gemini API key
+- Groq API key (https://console.groq.com/keys)
 
 ---
 
@@ -21,7 +21,7 @@
    - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port 10000`
    - **Plan:** Free
 5. Add environment variable:
-   - `GEMINI_API_KEY` = your Gemini API key
+   - `GROQ_API_KEY` = your Groq API key
    - `CORS_ORIGIN` = `https://maya-gitam.vercel.app` (after frontend deploys)
 6. Click **Create Web Service**
 7. Wait for deploy — copy the URL (e.g., `https://maya-api.onrender.com`)

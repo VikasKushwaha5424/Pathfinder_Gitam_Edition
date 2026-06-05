@@ -31,7 +31,7 @@ cd backend
 python -m venv venv
 venv\Scripts\activate  # Windows
 pip install -r requirements.txt
-# Add GEMINI_API_KEY to backend/.env
+# Add GROQ_API_KEY to backend/.env
 python main.py
 
 # Frontend
