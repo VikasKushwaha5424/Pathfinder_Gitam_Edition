@@ -12,6 +12,30 @@ from routes.locations import CAMPUS_LOCATIONS
 
 router = APIRouter()
 
+NAVIGATION_LOCATIONS = [
+    "library", "admin_block", "cse_department", "canteen",
+    "sports_complex", "auditorium", "hostel_block", "parking",
+]
+
+NAVIGATE_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "navigate_to",
+        "description": "Trigger visual navigation arrows and map guidance to a campus destination. Use this when the user asks for directions or wants to go somewhere.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "type": "string",
+                    "enum": NAVIGATION_LOCATIONS,
+                    "description": "The campus location to navigate to",
+                }
+            },
+            "required": ["destination"],
+        },
+    },
+}
+
 
 @router.post("/generate")
 async def generate_response(user_input: UserInput):
@@ -33,13 +57,16 @@ async def generate_response(user_input: UserInput):
     history = get_or_create_session(session, npc)
     system_prompt = NPC_PROMPTS[npc]
 
+    nav_destination = ""
+
     try:
         world_state = dict(user_input.world_state)
         if user_input.location:
             world_state["location"] = user_input.location
-            world_state["location_description"] = CAMPUS_LOCATIONS.get(
-                user_input.location,
-                f"the {user_input.location.replace('_', ' ').title()} area",
+            loc_data = CAMPUS_LOCATIONS.get(user_input.location)
+            world_state["location_description"] = (
+                loc_data["description"] if loc_data
+                else f"the {user_input.location.replace('_', ' ').title()} area"
             )
 
         injected = f"[System World State: {json.dumps(world_state)}] User says: {user_input.text}"
@@ -54,12 +81,28 @@ async def generate_response(user_input: UserInput):
             messages=messages,
             temperature=0.8,
             max_tokens=300,
+            tools=[NAVIGATE_TOOL],
+            tool_choice="auto",
         )
 
-        reply_text = response.choices[0].message.content
+        choice = response.choices[0].message
+        reply_text = choice.content or ""
+
+        if choice.tool_calls:
+            for tc in choice.tool_calls:
+                if tc.function.name == "navigate_to":
+                    try:
+                        args = json.loads(tc.function.arguments)
+                        nav_destination = args.get("destination", "")
+                    except json.JSONDecodeError:
+                        pass
+            if not reply_text:
+                loc_name = nav_destination.replace("_", " ").title() if nav_destination else "your destination"
+                reply_text = f"I'll guide you to the {loc_name}. Follow the arrow on your screen!"
 
         history.append({"role": "user", "content": injected})
-        history.append({"role": "assistant", "content": reply_text})
+        hist_content = choice.content or f"[Navigation to {nav_destination}]"
+        history.append({"role": "assistant", "content": hist_content})
         if len(history) > 10:
             del history[:-10]
 
@@ -89,10 +132,14 @@ async def generate_response(user_input: UserInput):
     async def _stream():
         yield bytes(audio_bytes)
 
+    response_headers = {"X-NPC-Response": encoded}
+    if nav_destination:
+        response_headers["X-Navigation-Destination"] = nav_destination
+
     return StreamingResponse(
         _stream(),
         media_type="audio/mpeg",
-        headers={"X-NPC-Response": encoded},
+        headers=response_headers,
     )
 
 

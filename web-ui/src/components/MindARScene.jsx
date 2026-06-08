@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import MayaCharacter from './MayaCharacter';
+import NavigationArrow from './NavigationArrow';
+import ARTrail from './ARTrail';
+import { CAMPUS_LOCATIONS } from '../data/config';
+import { calculateBearing } from '../utils/navigation';
 
 const TARGET_LOCATIONS = [
   { index: 0, id: 'library', name: 'Library' },
   { index: 1, id: 'canteen', name: 'Canteen' },
-  { index: 2, id: 'csdept', name: 'CS Department' },
+  { index: 2, id: 'cse_department', name: 'CS Department' },
   { index: 3, id: 'admin_block', name: 'Admin Block' },
   { index: 4, id: 'sports_complex', name: 'Sports Complex' },
   { index: 5, id: 'auditorium', name: 'Auditorium' },
@@ -12,10 +16,17 @@ const TARGET_LOCATIONS = [
   { index: 7, id: 'parking', name: 'Parking' },
 ];
 
-export default function MindARScene({ onTargetDetected, onTargetLost, isSpeaking, onReady }) {
+export default function MindARScene({ onTargetDetected, onTargetLost, isSpeaking, onReady, destination, location, trailPoints }) {
   const sceneRef = useRef(null);
   const [arReady, setArReady] = useState(false);
   const [error, setError] = useState(null);
+
+  const getLocData = (id) => CAMPUS_LOCATIONS.find((l) => l.id === id);
+  const originData = getLocData(location);
+  const destData = getLocData(destination);
+  const arrowBearing = originData && destData
+    ? calculateBearing(originData.lat, originData.lng, destData.lat, destData.lng) - (originData.posterHeading || 0)
+    : 0;
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -122,6 +133,22 @@ export default function MindARScene({ onTargetDetected, onTargetLost, isSpeaking
               showLabel={false}
               bobAnimation={false}
             />
+            {location === loc.id && destination && (
+              <NavigationArrow
+                rotationY={arrowBearing}
+                visible={true}
+                color="#FF8C00"
+              />
+            )}
+            {location === loc.id && originData && (
+              <ARTrail
+                points={trailPoints}
+                originLat={originData.lat}
+                originLng={originData.lng}
+                originHeading={originData.posterHeading || 0}
+                maxRadius={30}
+              />
+            )}
           </a-entity>
         ))}
       </a-scene>

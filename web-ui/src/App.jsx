@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useTelemetry } from './hooks/useTelemetry';
+import useTrail from './hooks/useTrail';
 import TelemetryHUD from './components/TelemetryHUD';
 import ARScene from './components/ARScene';
 import MindARScene from './components/MindARScene';
@@ -8,7 +9,14 @@ import WebXRScene from './components/WebXRScene';
 import ChatOverlay from './components/ChatOverlay';
 import HoldToTalk from './components/HoldToTalk';
 import DesktopControls from './components/DesktopControls';
-import { API_BASE, NPC_LIST, CAMPUS_LOCATIONS } from './data/config';
+import CampusMap from './components/CampusMap';
+import TrailUI from './components/TrailUI';
+import ClassStatus from './components/ClassStatus';
+import ETAOverlay from './components/ETAOverlay';
+import FloorPlanView from './components/FloorPlanView';
+import { hasFloorPlan } from './data/floorplans';
+import useTimetable from './hooks/useTimetable';
+import { API_BASE, NPC_LIST, CAMPUS_LOCATIONS, CAMPUS_POI } from './data/config';
 import './App.css';
 
 function App() {
@@ -19,6 +27,9 @@ function App() {
   const [isListening, setIsListening] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [location, setLocation] = useState('');
+  const [destination, setDestination] = useState(null);
+  const [mapVisible, setMapVisible] = useState(false);
+  const [showFloorPlan, setShowFloorPlan] = useState(false);
   const [renderMode, setRenderMode] = useState('loading');
   const [showDebug, setShowDebug] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
@@ -26,6 +37,51 @@ function App() {
 
   const telemetry = useTelemetry();
   const { setStatus: setTelemetryStatus, logEvent: logTelemetryEvent, updateLatency: updateTelemetryLatency } = telemetry;
+
+  const trail = useTrail();
+  const { trailPoints, isRecording, startTrail, recordPoint, stopTrail, clearActiveTrail: clearTrail } = trail;
+
+  const timetable = useTimetable();
+  const { currentClass, nextClass, minsToNext, autoDestination } = timetable;
+
+  const recordPointFromLoc = useCallback((locId) => {
+    if (!locId) return;
+    const loc = CAMPUS_LOCATIONS.find((l) => l.id === locId);
+    if (loc?.lat) recordPoint(loc.lat, loc.lng);
+  }, [recordPoint]);
+
+  // Auto-navigate when class is imminent and no destination is set
+  useEffect(() => {
+    if (autoDestination && !destination) {
+      setDestination(autoDestination);
+      setMapVisible(true);
+      startTrail();
+      const loc = CAMPUS_LOCATIONS.find((l) => l.id === autoDestination);
+      if (loc?.lat) recordPoint(loc.lat, loc.lng);
+    }
+  }, [autoDestination]);
+
+  // Auto-show floor plan when scanning a building that has one
+  useEffect(() => {
+    if (location && hasFloorPlan(location)) {
+      setShowFloorPlan(true);
+    }
+  }, [location]);
+
+  const [classDismissed, setClassDismissed] = useState(false);
+
+  const handleClassNavigate = useCallback((locId) => {
+    setDestination(locId);
+    setMapVisible(true);
+    setClassDismissed(false);
+    startTrail();
+    recordPointFromLoc(location || locId);
+  }, [location, startTrail, recordPointFromLoc]);
+
+  const handleClassDismiss = useCallback(() => {
+    setClassDismissed(true);
+  }, []);
+
   const recognitionRef = useRef(null);
   const audioPlayerRef = useRef(new Audio());
   const lastSendRef = useRef(0);
@@ -101,6 +157,14 @@ function App() {
         const aiText = decoded || '[Audio Response]';
         const aiMsg = { id: ++nextMsgIdRef.current, sender: 'ai', text: aiText, npc: currentNpc };
         setChatHistory((prev) => [...prev, aiMsg]);
+
+        const navDest = res.headers['x-navigation-destination'] || '';
+        if (navDest) {
+          setDestination(navDest);
+          setMapVisible(true);
+          const trailId = startTrail();
+          recordPointFromLoc(currentLocation);
+        }
 
         const blob = res.data;
         if (blob.size > 0) {
@@ -257,13 +321,20 @@ function App() {
         />
       ) : renderMode === 'mobile-ar' ? (
         <MindARScene
-          onTargetDetected={(loc) => setLocation(loc)}
+          onTargetDetected={(loc) => {
+            setLocation(loc);
+            recordPointFromLoc(loc);
+            if (loc === destination) setDestination(null);
+          }}
           onTargetLost={() => {}}
           isSpeaking={isPlaying}
+          destination={destination}
+          location={location}
+          trailPoints={trailPoints}
           onReady={() => logTelemetryEvent('INFO', 'AR', 'MindAR initialized')}
         />
       ) : (
-        <ARScene onCharacterClick={toggleListen} isSpeaking={isPlaying} />
+        <ARScene onCharacterClick={toggleListen} isSpeaking={isPlaying} destination={destination} location={location} trailPoints={trailPoints} />
       )}
 
       <ChatOverlay
@@ -319,6 +390,44 @@ function App() {
         )}
       </ChatOverlay>
 
+      {!classDismissed && currentClass && (
+        <ClassStatus
+          currentClass={currentClass}
+          nextClass={nextClass}
+          minsToNext={minsToNext}
+          onNavigate={handleClassNavigate}
+          onDismiss={handleClassDismiss}
+        />
+      )}
+
+      {!classDismissed && !currentClass && nextClass && minsToNext <= 30 && (
+        <ClassStatus
+          currentClass={null}
+          nextClass={nextClass}
+          minsToNext={minsToNext}
+          onNavigate={handleClassNavigate}
+          onDismiss={handleClassDismiss}
+        />
+      )}
+
+      <ETAOverlay destination={destination} visible={!!destination} />
+
+      <CampusMap
+        currentId={location}
+        destinationId={destination}
+        locations={CAMPUS_LOCATIONS}
+        pois={CAMPUS_POI}
+        visible={mapVisible}
+        onClose={() => setMapVisible(false)}
+        trailPoints={trailPoints}
+      />
+
+      <FloorPlanView
+        locationId={location}
+        visible={showFloorPlan}
+        onClose={() => setShowFloorPlan(false)}
+      />
+
       {pendingPlayback && (
         <div className="playback-overlay" onClick={resumePlayback}>
           <button className="playback-button">🔊 Tap to hear response</button>
@@ -339,12 +448,53 @@ function App() {
         <select
           className="location-select"
           value={location}
-          onChange={(e) => setLocation(e.target.value)}
+          onChange={(e) => {
+            setLocation(e.target.value);
+            recordPointFromLoc(e.target.value);
+          }}
         >
           {CAMPUS_LOCATIONS.map((loc) => (
             <option key={loc.id} value={loc.id}>{loc.name}</option>
           ))}
         </select>
+
+        {destination && (
+          <button
+            className="stop-nav-btn"
+            onClick={() => { setDestination(null); setMapVisible(false); clearTrail(); }}
+            title="Stop navigation"
+          >
+            ✕ Nav
+          </button>
+        )}
+
+        <button
+          className="map-toggle"
+          onClick={() => setMapVisible((v) => !v)}
+          title="Toggle campus map"
+        >
+          🗺️
+        </button>
+
+        {hasFloorPlan(location) && (
+          <button
+            className={`floorplan-toggle ${showFloorPlan ? 'active' : ''}`}
+            onClick={() => setShowFloorPlan((v) => !v)}
+            title="Show floor plan"
+          >
+            🏛️
+          </button>
+        )}
+
+        <TrailUI
+          activeTrailId={trail.activeTrailId}
+          trailPoints={trailPoints}
+          isRecording={isRecording}
+          savedTrails={trail.savedTrails}
+          stopTrail={stopTrail}
+          loadTrail={trail.loadTrail}
+          clearTrail={trail.clearTrail}
+        />
 
         <button
           className="debug-toggle"

@@ -11,6 +11,30 @@ from services.tts import clean_text, stream_tts_pcm
 
 router = APIRouter()
 
+NAVIGATION_LOCATIONS = [
+    "library", "admin_block", "cse_department", "canteen",
+    "sports_complex", "auditorium", "hostel_block", "parking",
+]
+
+NAVIGATE_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "navigate_to",
+        "description": "Trigger visual navigation arrows and map guidance to a campus destination. Use this when the user asks for directions or wants to go somewhere.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "destination": {
+                    "type": "string",
+                    "enum": NAVIGATION_LOCATIONS,
+                    "description": "The campus location to navigate to",
+                }
+            },
+            "required": ["destination"],
+        },
+    },
+}
+
 
 @router.websocket("/ws/npc/{npc_id}/{session_id}")
 async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
@@ -67,17 +91,36 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
                 messages=messages,
                 temperature=0.8,
                 max_tokens=300,
+                tools=[NAVIGATE_TOOL],
+                tool_choice="auto",
             )
             llm_ms = (time.time() - t0) * 1000
 
-            reply_text = response.choices[0].message.content
+            choice = response.choices[0].message
+            reply_text = choice.content or ""
+            nav_destination = ""
+
+            if choice.tool_calls:
+                for tc in choice.tool_calls:
+                    if tc.function.name == "navigate_to":
+                        try:
+                            args = json.loads(tc.function.arguments)
+                            nav_destination = args.get("destination", "")
+                        except json.JSONDecodeError:
+                            pass
+                if not reply_text:
+                    loc_name = nav_destination.replace("_", " ").title() if nav_destination else "your destination"
+                    reply_text = f"I'll guide you to the {loc_name}. Follow the arrow on your screen!"
 
             history.append({"role": "user", "content": prompt})
-            history.append({"role": "assistant", "content": reply_text})
+            hist_content = choice.content or f"[Navigation to {nav_destination}]"
+            history.append({"role": "assistant", "content": hist_content})
             if len(history) > 10:
                 del history[:-10]
 
             await websocket.send_json({"type": "text", "content": reply_text})
+            if nav_destination:
+                await websocket.send_json({"type": "navigation", "destination": nav_destination})
 
             t0 = time.time()
             spoken = clean_text(reply_text)
@@ -95,7 +138,7 @@ async def npc_websocket(websocket: WebSocket, npc_id: str, session_id: str):
                 await websocket.send_json({"type": "error", "message": "Audio stream failed."})
 
             tts_ms = (time.time() - t0) * 1000
-            print(f"[TIMING] STT: {stt_ms:.0f}ms | LLM: {llm_ms:.0f}ms | TTS: {tts_ms:.0f}ms")
+            print(f"[TIMING] STT: {stt_ms:.0f}ms | LLM: {tts_ms:.0f}ms | TTS: {tts_ms:.0f}ms")
             await websocket.send_json({"type": "done"})
 
     except WebSocketDisconnect:
