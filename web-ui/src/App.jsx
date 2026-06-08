@@ -214,7 +214,7 @@ function App() {
         setChatHistory((prev) => [...prev, { id: ++nextMsgIdRef.current, sender: 'ai', text: msg, npc: currentNpc }]);
       }
     },
-    [setTelemetryStatus, logTelemetryEvent, updateTelemetryLatency]
+    [setTelemetryStatus, updateTelemetryLatency]
   );
 
   const resumePlayback = useCallback(() => {
@@ -386,7 +386,7 @@ function App() {
             />
           </>
         ) : (
-          <HoldToTalk onAudioBlob={handleAudioBlob} location={location} />
+          <HoldToTalk onAudioBlob={handleAudioBlob} />
         )}
       </ChatOverlay>
 

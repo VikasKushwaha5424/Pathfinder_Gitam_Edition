@@ -18,18 +18,9 @@ export function useTelemetry() {
     });
   }, []);
 
-  // NEW: Helper functions to update metrics cleanly
-  const updateLatency = useCallback((ms) => {
+  const updateLatency = (ms) => {
     setMetrics(prev => ({ ...prev, latency: ms }));
-  }, []);
-
-  const addTokens = useCallback((count) => {
-    setMetrics(prev => ({ ...prev, tokens: prev.tokens + count }));
-  }, []);
-
-  const resetMetrics = useCallback(() => {
-    setMetrics({ latency: 0, tokens: 0 });
-  }, []);
+  };
 
   return { 
     status, 
@@ -37,8 +28,6 @@ export function useTelemetry() {
     logs, 
     logEvent, 
     metrics, 
-    updateLatency, 
-    addTokens, 
-    resetMetrics 
+    updateLatency,
   };
 }

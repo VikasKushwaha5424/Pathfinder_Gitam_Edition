@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTimetable, setTimetable as saveTimetable, getCurrentClass, getNextClass, minutesUntil } from '../data/timetable';
+import { getTimetable, getCurrentClass, getNextClass, minutesUntil } from '../data/timetable';
 
 export default function useTimetable() {
-  const [timetable, setTimetable] = useState(getTimetable);
+  const [timetable] = useState(getTimetable);
   const [currentClass, setCurrentClass] = useState(null);
   const [nextClass, setNextClass] = useState(null);
   const [minsToNext, setMinsToNext] = useState(null);
@@ -41,16 +41,10 @@ export default function useTimetable() {
     return () => clearInterval(interval);
   }, [update]);
 
-  const updateTimetable = useCallback((newTimetable) => {
-    setTimetable(newTimetable);
-    saveTimetable(newTimetable);
-  }, []);
-
   return {
     currentClass,
     nextClass,
     minsToNext,
     autoDestination,
-    updateTimetable,
   };
 }

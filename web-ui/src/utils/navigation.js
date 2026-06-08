@@ -18,11 +18,4 @@ export function calculateDistance(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function getLocationById(id, locations) {
-  return locations.find((l) => l.id === id);
-}
 
-export function getLocationName(id, locations) {
-  const loc = getLocationById(id, locations);
-  return loc ? loc.name : id ? id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : '';
-}

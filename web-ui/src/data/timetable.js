@@ -52,11 +52,11 @@ export function setTimetable(timetable) {
   }
 }
 
-export function getDayName(date) {
+function getDayName(date) {
   return DAYS[date.getDay()];
 }
 
-export function getTimeString(date) {
+function getTimeString(date) {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
@@ -81,4 +81,4 @@ export function minutesUntil(startTime, date) {
   return Math.round((target - date) / 60000);
 }
 
-export { DAYS };
+
