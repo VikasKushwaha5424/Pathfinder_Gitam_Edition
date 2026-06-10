@@ -560,7 +560,8 @@ function App() {
           {
             text,
             npc_id: currentNpc,
-            location: currentLocation,
+            location: currentLocation || '',
+            session_id: sessionIdRef.current || 'default_user',
             world_state: {
               environment: 'campus-ar',
               user_notes: '',
@@ -580,7 +581,6 @@ function App() {
                 route: { destination_status: routeStatusRef.current },
               } : {}),
             },
-            session_id: sessionIdRef.current,
           },
           { timeout: 30000, responseType: 'blob', signal: controller.signal }
         );
@@ -652,7 +652,9 @@ function App() {
           ? 'Network connection lost. Please try again.'
           : error.response?.status === 429
             ? 'AI Quota Exhausted. Switching to Offline Mode.'
-            : 'Connection error. Is the backend running?';
+            : error.response?.status === 422
+              ? "I didn't catch that — could you say it again?"
+              : 'Connection error. Is the backend running?';
         setChatHistory((prev) => [...prev, { id: ++nextMsgIdRef.current, sender: 'ai', text: msg, npc: currentNpc }]);
       }
     },
@@ -779,6 +781,7 @@ function App() {
           onCharacterClick={toggleListen}
           isSpeaking={isPlaying}
           onReady={() => logTelemetryEvent('INFO', 'XR', 'WebXR immersive AR active')}
+          onError={() => { logTelemetryEvent('WARN', 'XR', 'WebXR failed — falling back to MindAR'); setRenderMode('mobile-ar'); }}
         />
       ) : renderMode === 'mobile-ar' ? (
         <MindARScene

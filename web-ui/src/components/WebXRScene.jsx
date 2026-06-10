@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import MayaCharacter from './MayaCharacter';
 
-export default function WebXRScene({ onCharacterClick, isSpeaking, onReady }) {
+export default function WebXRScene({ onCharacterClick, isSpeaking, onReady, onError }) {
   const sceneRef = useRef(null);
   const [arActive, setArActive] = useState(false);
   const [error, setError] = useState(null);
@@ -39,6 +39,7 @@ export default function WebXRScene({ onCharacterClick, isSpeaking, onReady }) {
           retries++;
           timeoutRef.current = setTimeout(tryEnter, 1000);
         } else {
+          onError?.();
           setError('Could not enter AR: ' + err.message);
         }
       }

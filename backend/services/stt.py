@@ -27,24 +27,51 @@ async def get_model():
 
 
 async def transcribe_bytes(audio_bytes: bytes) -> str:
+    raw_path = None
+    wav_path = None
     try:
         model = await get_model()
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+        print(f"[STT] Received {len(audio_bytes)} bytes of audio")
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".in") as tmp:
             tmp.write(audio_bytes)
-            path = tmp.name
+            raw_path = tmp.name
+
+        import subprocess
+
+        def _convert():
+            out = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+            out.close()
+            last_err = ""
+            for probe in [["-f", "webm"], ["-f", "matroska"], ["-f", "ogg"], []]:
+                cmd = ["ffmpeg", "-y"] + probe + ["-i", raw_path,
+                       "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", out.name]
+                r = subprocess.run(cmd, capture_output=True)
+                if r.returncode == 0:
+                    return out.name
+                last_err = r.stderr.decode(errors="replace")
+            err = last_err[-500:]
+            print(f"ffmpeg stderr (tail):\n{err}")
+            raise RuntimeError(f"ffmpeg exited with code {r.returncode}")
+
+        wav_path = await asyncio.to_thread(_convert)
 
         def _run():
             segments, _ = model.transcribe(
-                path, beam_size=1, language="en", vad_filter=True
+                wav_path, beam_size=1, language="en", vad_filter=True
             )
             return "".join(s.text for s in segments)
 
         text = await asyncio.to_thread(_run)
-        os.remove(path)
         return text.strip()
     except Exception as e:
         print(f"STT error: {e}")
         return "[Error transcribing audio]"
+    finally:
+        if raw_path and os.path.exists(raw_path):
+            os.remove(raw_path)
+        if wav_path and os.path.exists(wav_path):
+            os.remove(wav_path)
 
 
 async def transcribe_base64(b64_audio: str) -> str:

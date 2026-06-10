@@ -2,6 +2,7 @@ import traceback
 import urllib.parse
 import json
 
+import openai
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -47,6 +48,15 @@ async def generate_response(user_input: UserInput):
             _empty(),
             media_type="audio/mpeg",
             headers={"X-NPC-Response": "System Warmed Up"},
+        )
+
+    if not user_input.text.strip():
+        async def _silent():
+            yield b""
+        return StreamingResponse(
+            _silent(),
+            media_type="audio/mpeg",
+            headers={"X-NPC-Response": "I didn't hear anything — could you say that again?"},
         )
 
     npc = user_input.npc_id.lower()
@@ -127,6 +137,26 @@ async def generate_response(user_input: UserInput):
 
         header = reply_text[:300] + "..." if len(reply_text) > 300 else reply_text
         encoded = urllib.parse.quote(header)
+
+    except openai.BadRequestError as bre:
+        traceback.print_exc()
+        print(f"[GROQ] Bad request (tool call validation): {bre}")
+        reply_text = "I had trouble understanding that — could you try asking differently?"
+        encoded = urllib.parse.quote(reply_text)
+        spoken = clean_text(reply_text)
+        voice = NPC_VOICES.get(npc, "en-US-AriaNeural")
+
+        async def _fallback():
+            try:
+                async for chunk in stream_tts(spoken, voice):
+                    yield chunk
+            except Exception:
+                yield b""
+        return StreamingResponse(
+            _fallback(),
+            media_type="audio/mpeg",
+            headers={"X-NPC-Response": encoded},
+        )
 
     except Exception as e:
         traceback.print_exc()
