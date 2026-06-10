@@ -26,7 +26,7 @@ export function computeTurnAngle(prevLat, prevLng, currLat, currLng, nextLat, ne
 }
 
 export function getDirectionLabel(angleDeg) {
-  if (angleDeg > 150 || angleDeg < -150) return 'Turn Around';
+  if (angleDeg >= 150 || angleDeg <= -150) return 'Turn Around';
   if (angleDeg > 30) return 'Turn Right';
   if (angleDeg < -30) return 'Turn Left';
   return 'Go Straight';
@@ -38,6 +38,13 @@ export function getTurnIntensity(angleDeg) {
   if (abs >= 60) return 'moderate';
   if (abs >= 30) return 'gentle';
   return 'straight';
+}
+
+export function getVerticalDirection(fromFloor, toFloor) {
+  if (fromFloor === undefined || toFloor === undefined) return null;
+  if (toFloor > fromFloor) return 'Go Upstairs';
+  if (toFloor < fromFloor) return 'Go Downstairs';
+  return null;
 }
 
 

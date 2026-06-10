@@ -21,11 +21,13 @@ export default function FloorPlanView({ locationId, visible, onClose }) {
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const initializedRef = useRef(false);
+  const invalidateTimerRef = useRef(null);
 
   const plan = locationId ? getFloorPlan(locationId) : null;
 
   useEffect(() => {
     if (!visible || !plan || !containerRef.current) {
+      clearTimeout(invalidateTimerRef.current);
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
@@ -79,9 +81,10 @@ export default function FloorPlanView({ locationId, visible, onClose }) {
 
     mapRef.current = map;
 
-    setTimeout(() => map.invalidateSize(), 200);
+    invalidateTimerRef.current = setTimeout(() => map.invalidateSize(), 200);
 
     return () => {
+      clearTimeout(invalidateTimerRef.current);
       map.remove();
       mapRef.current = null;
       initializedRef.current = false;

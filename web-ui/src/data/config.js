@@ -8,6 +8,9 @@ export const CAMPUS_LOCATIONS = [
   { id: 'auditorium', name: 'Auditorium', lat: 17.781841, lng: 83.377170, posterHeading: 0 },
   { id: 'hostel_block', name: 'Hostels', lat: 17.783780, lng: 83.378555, posterHeading: 0 },
   { id: 'parking', name: 'Parking', lat: 17.780280, lng: 83.379079, posterHeading: 0 },
+  { id: 'room_a_loc', name: 'Room A (Test)', lat: 0, lng: 0, posterHeading: 0 },
+  { id: 'hallway_loc', name: 'Hallway (Test)', lat: 0.000045, lng: 0, posterHeading: 0 },
+  { id: 'living_room_loc', name: 'Living Room (Test)', lat: 0.000045, lng: 0.000072, posterHeading: 0 },
 ];
 
 export const CAMPUS_POI = [
@@ -66,16 +69,16 @@ export const CAMPUS_NODES = [
 
   // ── CS Department Indoor ──
   { id: 'node_cse_entrance', label: 'CS Dept Entrance (Inside)', type: 'waypoint', lat: 17.780486, lng: 83.376235, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_corridor', label: 'CS Dept Corridor', type: 'waypoint', lat: 17.780486, lng: 83.376235, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_lab101', label: 'CS Lab 101', type: 'anchor', lat: 17.780520, lng: 83.376220, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_lab102', label: 'CS Lab 102', type: 'anchor', lat: 17.780540, lng: 83.376200, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_lecture_hall', label: 'CS Lecture Hall A', type: 'anchor', lat: 17.780470, lng: 83.376260, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_faculty', label: 'CS Faculty Room', type: 'anchor', lat: 17.780500, lng: 83.376250, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_server', label: 'CS Server Room', type: 'anchor', lat: 17.780510, lng: 83.376270, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_stairs', label: 'CS Stairs', type: 'waypoint', lat: 17.780490, lng: 83.376240, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_elevator', label: 'CS Elevator', type: 'waypoint', lat: 17.780495, lng: 83.376245, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_restroom', label: 'CS Restroom', type: 'anchor', lat: 17.780505, lng: 83.376255, building: 'cse_department', floor: 0 },
-  { id: 'node_cse_printer', label: 'CS Printer Room', type: 'anchor', lat: 17.780515, lng: 83.376265, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_corridor', label: 'CS Dept Corridor', type: 'waypoint', lat: 17.780500, lng: 83.376235, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_lab101', label: 'CS Lab 101', type: 'anchor', lat: 17.780510, lng: 83.376245, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_lab102', label: 'CS Lab 102', type: 'anchor', lat: 17.780520, lng: 83.376250, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_lecture_hall', label: 'CS Lecture Hall A', type: 'anchor', lat: 17.780495, lng: 83.376245, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_faculty', label: 'CS Faculty Room', type: 'anchor', lat: 17.780505, lng: 83.376240, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_server', label: 'CS Server Room', type: 'anchor', lat: 17.780515, lng: 83.376240, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_stairs', label: 'CS Stairs', type: 'waypoint', lat: 17.780510, lng: 83.376225, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_elevator', label: 'CS Elevator', type: 'waypoint', lat: 17.780515, lng: 83.376228, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_restroom', label: 'CS Restroom', type: 'anchor', lat: 17.780525, lng: 83.376255, building: 'cse_department', floor: 0 },
+  { id: 'node_cse_printer', label: 'CS Printer Room', type: 'anchor', lat: 17.780530, lng: 83.376250, building: 'cse_department', floor: 0 },
 
   // ── Library Indoor ──
   { id: 'node_lib_entrance', label: 'Library Entrance (Inside)', type: 'waypoint', lat: 17.782078, lng: 83.377342, building: 'library', floor: 0 },

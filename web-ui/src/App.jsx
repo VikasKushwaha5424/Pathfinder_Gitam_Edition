@@ -126,8 +126,11 @@ function App() {
   }, [recordPoint]);
 
   const resolveNodeId = useCallback((locId) => {
+    if (!locId) return null;
     const target = AR_TARGETS.find((t) => t.id === locId);
-    return target?.nodeId || null;
+    if (target?.nodeId) return target.nodeId;
+    const node = CAMPUS_NODES.find((n) => n.id === locId);
+    return node?.id || null;
   }, []);
 
   const clearRouteTimer = useCallback(() => {
@@ -141,6 +144,7 @@ function App() {
     clearRouteTimer();
     if (seconds <= 0) return;
     routeTimeoutRef.current = setTimeout(() => {
+      if (routeStatusRef.current !== 'active') return;
       setRouteStatus('off_route');
       logTelemetryEvent('WARN', 'ROUTE', 'User may be off-route — timeout expired');
       routeTimeoutRef.current = null;
@@ -152,8 +156,32 @@ function App() {
     setCurrentRoute(null);
     setNextWaypointIndex(0);
     setRouteStatus('idle');
+    setCurrentNodeId(null);
     try { sessionStorage.removeItem('maya_route'); } catch {}
   }, [clearRouteTimer]);
+
+  const requestAnnouncement = useCallback(async (text) => {
+    if (!text) return;
+    try {
+      const res = await axios.post(`${API_BASE}/announce`, {
+        text,
+        voice: 'en-US-AriaNeural',
+      }, { timeout: 15000, responseType: 'blob' });
+      const blob = res.data;
+      if (blob.size > 0) {
+        const url = URL.createObjectURL(blob);
+        const player = systemAudioPlayerRef.current;
+        player.src = url;
+        player.onended = () => URL.revokeObjectURL(url);
+        const playPromise = player.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {});
+        }
+      }
+    } catch (err) {
+      logTelemetryEvent?.('ERROR', 'ANNOUNCE', err.message);
+    }
+  }, [logTelemetryEvent]);
 
   const computeAndSetRoute = useCallback((fromNodeId, toNodeId) => {
     if (!fromNodeId || !toNodeId) {
@@ -173,6 +201,7 @@ function App() {
     const result = findPath(fromNodeId, toNodeId, CAMPUS_EDGES, filterFn || undefined);
     if (result.path.length < 2) {
       clearRoute();
+      requestAnnouncement("I couldn't find an accessible route to that destination with your current filters.");
       return;
     }
     setCurrentRoute(result.path);
@@ -190,7 +219,7 @@ function App() {
         )?.distance || 0
       : 0;
     startRouteTimer(((legDist / walkSpeed) + 10) * 2);
-  }, [clearRoute, startRouteTimer, logTelemetryEvent]);
+  }, [clearRoute, startRouteTimer, logTelemetryEvent, requestAnnouncement]);
 
   useEffect(() => {
     currentRouteRef.current = currentRoute;
@@ -210,24 +239,17 @@ function App() {
     } catch {}
   }, [currentRoute, nextWaypointIndex, routeStatus, currentNodeId]);
 
-  const requestAnnouncement = useCallback(async (text) => {
-    if (!text) return;
-    try {
-      const res = await axios.post(`${API_BASE}/announce`, {
-        text,
-        voice: 'en-US-AriaNeural',
-      }, { timeout: 15000, responseType: 'blob' });
-      const blob = res.data;
-      if (blob.size > 0) {
-        const url = URL.createObjectURL(blob);
-        const player = audioPlayerRef.current;
-        player.src = url;
-        const playPromise = player.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(() => {});
-        }
-      }
-    } catch {}
+  // Restart off-route timer after session hydration
+  useEffect(() => {
+    if (routeStatus !== 'active' || !currentRoute || nextWaypointIndex < 1) return;
+    const legEdge = CAMPUS_EDGES.find(
+      (e) =>
+        (e.source === currentRoute[nextWaypointIndex - 1] && e.target === currentRoute[nextWaypointIndex]) ||
+        (e.target === currentRoute[nextWaypointIndex - 1] && e.source === currentRoute[nextWaypointIndex])
+    );
+    const walkSpeed = 1.4;
+    const legDist = legEdge?.distance || 0;
+    startRouteTimer(((legDist / walkSpeed) + 10) * 2);
   }, []);
 
   const prevWaypointIndexRef = useRef(0);
@@ -259,16 +281,20 @@ function App() {
       setShowRoutePreview(false);
       const fromNode = resolveNodeId(currentNodeId);
       const toNode = resolveNodeId(nextDest);
-      if (fromNode && toNode) computeAndSetRoute(fromNode, toNode);
+      if (fromNode && toNode) {
+        computeAndSetRoute(fromNode, toNode);
+        setRouteStatus('active');
+        setShowRoutePreview(false);
+      }
     }
-  }, [routeStatus]);
+  }, [routeStatus, routeQueue, resolveNodeId, computeAndSetRoute]);
 
   useEffect(() => {
     if (routeStatusRef.current === 'active' && currentRouteRef.current && currentNodeId) {
       const toNode = currentRouteRef.current[currentRouteRef.current.length - 1];
       computeAndSetRoute(currentNodeId, toNode);
     }
-  }, [routeFilters, computeAndSetRoute]);
+  }, [routeFilters, computeAndSetRoute, currentNodeId]);
 
   const handleTargetDetected = useCallback((locId) => {
     const nodeId = resolveNodeId(locId);
@@ -302,10 +328,37 @@ function App() {
         logTelemetryEvent('INFO', 'ROUTE', `Advanced to waypoint ${nextIdx}/${route.length - 1}`);
       }
     } else if (route.includes(nodeId)) {
-      const foundIdx = route.indexOf(nodeId);
+      const foundIdx = route.lastIndexOf(nodeId);
       if (foundIdx > wpIdx) {
-        setNextWaypointIndex(foundIdx + 1);
+        setRouteStatus('active');
+        clearRouteTimer();
+        const nextIdx = foundIdx + 1;
+        setNextWaypointIndex(nextIdx);
+        if (nextIdx < route.length) {
+          const nextEdge = CAMPUS_EDGES.find(
+            (e) =>
+              (e.source === route[nextIdx - 1] && e.target === route[nextIdx]) ||
+              (e.target === route[nextIdx - 1] && e.source === route[nextIdx])
+          );
+          const walkSpeed = 1.4;
+          const legDist = nextEdge?.distance || 0;
+          startRouteTimer(((legDist / walkSpeed) + 10) * 2);
+        }
         logTelemetryEvent('INFO', 'ROUTE', `Skipped ahead to waypoint ${foundIdx}`);
+      } else if (foundIdx < wpIdx - 1 && foundIdx >= 0) {
+        setRouteStatus('active');
+        clearRouteTimer();
+        const nextIdx = foundIdx + 1;
+        setNextWaypointIndex(nextIdx);
+        const nextEdge = CAMPUS_EDGES.find(
+          (e) =>
+            (e.source === route[nextIdx - 1] && e.target === route[nextIdx]) ||
+            (e.target === route[nextIdx - 1] && e.source === route[nextIdx])
+        );
+        const walkSpeed = 1.4;
+        const legDist = nextEdge?.distance || 0;
+        startRouteTimer(((legDist / walkSpeed) + 10) * 2);
+        logTelemetryEvent('INFO', 'ROUTE', `Rolled back to waypoint ${foundIdx}`);
       }
     } else if (nodeId) {
       const destNode = route[route.length - 1];
@@ -328,6 +381,10 @@ function App() {
       if (fromNode && toNode) computeAndSetRoute(fromNode, toNode);
     }
   }, [autoDestination, startTrail, recordPoint, resolveNodeId, computeAndSetRoute]);
+
+  useEffect(() => {
+    setClassDismissed(false);
+  }, [currentClass?.id, nextClass?.id]);
 
   // Auto-show floor plan when scanning a building that has one
   useEffect(() => {
@@ -372,7 +429,9 @@ function App() {
   }, []);
 
   const recognitionRef = useRef(null);
+  const handleSendTextRef = useRef(null);
   const audioPlayerRef = useRef(new Audio());
+  const systemAudioPlayerRef = useRef(new Audio());
   const lastSendRef = useRef(0);
   const blobUrlRef = useRef(null);
   const audioUnlockedRef = useRef(false);
@@ -524,7 +583,7 @@ function App() {
         if (navDest) {
           setDestination(navDest);
           setMapVisible(true);
-          const trailId = startTrail();
+          startTrail();
           recordPointFromLoc(currentLocation);
           const fromNode = resolveNodeId(currentLocation);
           const toNode = resolveNodeId(navDest);
@@ -592,6 +651,8 @@ function App() {
     });
   }, [pendingPlayback, ensureAudioUnlocked]);
 
+  useEffect(() => { handleSendTextRef.current = handleSendText; }, [handleSendText]);
+
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
@@ -617,7 +678,7 @@ function App() {
 
     recognition.onresult = (e) => {
       const transcript = e.results[0][0].transcript;
-      handleSendText(transcript);
+      handleSendTextRef.current?.(transcript);
     };
 
     recognition.onerror = (e) => {
@@ -628,7 +689,7 @@ function App() {
     recognitionRef.current = recognition;
 
     return () => recognition.abort();
-  }, [handleSendText, setTelemetryStatus, logTelemetryEvent]);
+  }, [setTelemetryStatus, logTelemetryEvent]);
 
   const toggleListen = useCallback(() => {
     ensureAudioUnlocked();
@@ -684,7 +745,7 @@ function App() {
   }
 
   return (
-    <GeolocationProvider>
+    <GeolocationProvider lowPowerMode={lowPowerMode}>
     <div className="app-container ar-mode">
       {insecureWarning && (
         <div style={{
@@ -714,6 +775,8 @@ function App() {
           nextWaypointIndex={nextWaypointIndex}
           routeStatus={routeStatus}
           currentNodeId={currentNodeId}
+          userLatitude={latitude}
+          userLongitude={longitude}
         />
       ) : (
         <ARScene
@@ -726,6 +789,8 @@ function App() {
           nextWaypointIndex={nextWaypointIndex}
           routeStatus={routeStatus}
           currentNodeId={currentNodeId}
+          userLatitude={latitude}
+          userLongitude={longitude}
         />
       )}
 

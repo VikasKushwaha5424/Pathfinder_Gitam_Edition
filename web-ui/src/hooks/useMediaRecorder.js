@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 export function useMediaRecorder() {
   const recorderRef = useRef(null);
@@ -58,6 +58,20 @@ export function useMediaRecorder() {
     if (recorderRef.current?.state === 'recording') {
       recorderRef.current.stop();
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(timeoutRef.current);
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+      if (recorderRef.current?.state === 'recording') {
+        recorderRef.current.stop();
+      }
+      recorderRef.current = null;
+    };
   }, []);
 
   return { startRecording, stopRecording };

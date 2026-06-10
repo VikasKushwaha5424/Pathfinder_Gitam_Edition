@@ -4,7 +4,7 @@ import NavigationArrow from './NavigationArrow';
 import ARTrail from './ARTrail';
 import { CAMPUS_LOCATIONS, CAMPUS_NODES } from '../data/config';
 import { AR_TARGETS } from '../data/targets';
-import { calculateBearing, calculateDistance, computeTurnAngle, getDirectionLabel } from '../utils/navigation';
+import { calculateBearing, calculateDistance, computeTurnAngle, getDirectionLabel, getVerticalDirection } from '../utils/navigation';
 import { getNodeById, ARRIVAL_THRESHOLD } from '../utils/pathfinding';
 
 const TARGETS_URL = `${import.meta.env.BASE_URL}targets/campus-targets.mind`;
@@ -13,8 +13,11 @@ export default function MindARScene({
   onTargetDetected, onTargetLost, isSpeaking, onReady,
   destination, location, trailPoints,
   currentRoute, nextWaypointIndex, routeStatus, currentNodeId,
+  userLatitude, userLongitude,
 }) {
   const sceneRef = useRef(null);
+  const t2Ref = useRef(null);
+  const onTargetDetectedRef = useRef(onTargetDetected);
   const [arReady, setArReady] = useState(false);
   const [error, setError] = useState(null);
 
@@ -40,23 +43,32 @@ export default function MindARScene({
     );
 
     const dist = calculateDistance(
-      originNode.lat, originNode.lng,
+      userLatitude || originNode.lat, userLongitude || originNode.lng,
       nextNode.lat, nextNode.lng
     );
 
     let turnAngle = 0;
     let directionLabel = '';
-    if (prevNode && currNode) {
-      turnAngle = computeTurnAngle(
-        prevNode.lat, prevNode.lng,
-        currNode.lat, currNode.lng,
-        nextNode.lat, nextNode.lng
-      );
-      directionLabel = getDirectionLabel(turnAngle);
+    if (currNode && nextNode) {
+      const vertical = getVerticalDirection(currNode.floor, nextNode.floor);
+      if (vertical) {
+        directionLabel = vertical;
+      } else if (prevNode && currNode) {
+        turnAngle = computeTurnAngle(
+          prevNode.lat, prevNode.lng,
+          currNode.lat, currNode.lng,
+          nextNode.lat, nextNode.lng
+        );
+        directionLabel = getDirectionLabel(turnAngle);
+      }
     }
 
     return { nextNode, bearing, distance: dist, turnAngle, directionLabel };
-  }, [currentRoute, nextWaypointIndex]);
+  }, [currentRoute, nextWaypointIndex, userLatitude, userLongitude]);
+
+  useEffect(() => {
+    onTargetDetectedRef.current = onTargetDetected;
+  }, [onTargetDetected]);
 
   const getLocData = (id) => CAMPUS_LOCATIONS.find((l) => l.id === id);
   const destLoc = destination ? CAMPUS_LOCATIONS.find((l) => l.id === destination) : null;
@@ -88,7 +100,7 @@ export default function MindARScene({
       if (!match) return;
       const idx = parseInt(match[1]);
       const loc = AR_TARGETS.find((t) => t.index === idx);
-      if (loc) onTargetDetected?.(loc.id);
+      if (loc) onTargetDetectedRef.current?.(loc.id);
     };
 
     const handleTargetLost = () => onTargetLost?.();
@@ -108,7 +120,7 @@ export default function MindARScene({
         setArReady(true);
         onReady?.();
       } else {
-        const t2 = setTimeout(() => {
+        t2Ref.current = setTimeout(() => {
           const retry = attach();
           if (retry.length > 0) {
             setArReady(true);
@@ -117,12 +129,12 @@ export default function MindARScene({
             setError('AR targets not found. MindAR may not have loaded.');
           }
         }, 3000);
-        return () => clearTimeout(t2);
       }
     }, 1500);
 
     return () => {
       clearTimeout(t1);
+      clearTimeout(t2Ref.current);
       const targets = scene?.querySelectorAll('[mindar-image-target]');
       targets?.forEach((el) => {
         el.removeEventListener('targetFound', handleTargetFound);
@@ -202,17 +214,17 @@ export default function MindARScene({
                 isOffRoute={routeStatus === 'off_route'}
               />
             )}
-            {location === loc.id && (
-              <ARTrail
-                points={trailPoints}
-                originLat={getLocData(location)?.lat || 0}
-                originLng={getLocData(location)?.lng || 0}
-                originHeading={getLocData(location)?.posterHeading || 0}
-                maxRadius={30}
-              />
-            )}
           </a-entity>
         ))}
+        {location && (
+          <ARTrail
+            points={trailPoints}
+            originLat={getLocData(location)?.lat || 0}
+            originLng={getLocData(location)?.lng || 0}
+            originHeading={getLocData(location)?.posterHeading || 0}
+            maxRadius={30}
+          />
+        )}
       </a-scene>
 
       {renderArrow && waypointData && (

@@ -6,6 +6,7 @@ export default function WebXRScene({ onCharacterClick, isSpeaking, onReady }) {
   const [arActive, setArActive] = useState(false);
   const [error, setError] = useState(null);
   const enteredRef = useRef(false);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -36,16 +37,19 @@ export default function WebXRScene({ onCharacterClick, isSpeaking, onReady }) {
         console.warn('WebXR entry failed:', err);
         if (retries < 2) {
           retries++;
-          setTimeout(tryEnter, 1000);
+          timeoutRef.current = setTimeout(tryEnter, 1000);
         } else {
           setError('Could not enter AR: ' + err.message);
         }
       }
     }
 
-    scene.addEventListener('loaded', () => setTimeout(tryEnter, 800));
+    timeoutRef.current = setTimeout(tryEnter, 800);
 
-    return () => { enteredRef.current = false; };
+    return () => {
+      clearTimeout(timeoutRef.current);
+      enteredRef.current = false;
+    };
   }, [onReady]);
 
   useEffect(() => {

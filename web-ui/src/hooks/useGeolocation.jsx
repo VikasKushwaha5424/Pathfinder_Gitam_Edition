@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useRef, useCallback } f
 
 const GeolocationContext = createContext(null);
 
-export function GeolocationProvider({ children, enableHighAccuracy = true, maxInterval = 5000, distanceFilter = 3 }) {
+export function GeolocationProvider({ children, enableHighAccuracy = true, maxInterval = 5000, distanceFilter = 3, lowPowerMode = false }) {
   const [coords, setCoords] = useState({ latitude: null, longitude: null, accuracy: null, heading: null, speed: null, timestamp: null });
   const [error, setError] = useState(null);
   const [isWatching, setIsWatching] = useState(false);
@@ -13,6 +13,12 @@ export function GeolocationProvider({ children, enableHighAccuracy = true, maxIn
       setError('Geolocation not available');
       return;
     }
+
+    const options = {
+      enableHighAccuracy: lowPowerMode ? false : enableHighAccuracy,
+      maximumInterval: lowPowerMode ? 30000 : maxInterval,
+      distanceFilter: lowPowerMode ? 20 : distanceFilter,
+    };
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
@@ -31,7 +37,7 @@ export function GeolocationProvider({ children, enableHighAccuracy = true, maxIn
         setError(err.message);
         setIsWatching(false);
       },
-      { enableHighAccuracy, maximumInterval: maxInterval, distanceFilter }
+      options
     );
 
     return () => {
@@ -40,7 +46,7 @@ export function GeolocationProvider({ children, enableHighAccuracy = true, maxIn
         watchIdRef.current = null;
       }
     };
-  }, [enableHighAccuracy, maxInterval, distanceFilter]);
+  }, [enableHighAccuracy, maxInterval, distanceFilter, lowPowerMode]);
 
   const value = { ...coords, error, isWatching };
 

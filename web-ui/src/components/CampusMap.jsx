@@ -44,6 +44,7 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
   const trailPolylineRef = useRef(null);
   const trailMarkersRef = useRef([]);
   const initializedRef = useRef(false);
+  const invalidateTimerRef = useRef(null);
 
   useEffect(() => {
     if (initializedRef.current || !containerRef.current) return;
@@ -63,9 +64,10 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
 
     mapRef.current = map;
 
-    setTimeout(() => map.invalidateSize(), 300);
+    invalidateTimerRef.current = setTimeout(() => map.invalidateSize(), 300);
 
     return () => {
+      clearTimeout(invalidateTimerRef.current);
       map.remove();
       mapRef.current = null;
       initializedRef.current = false;
@@ -165,7 +167,7 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
     routeWaypointMarkersRef.current.forEach((m) => map.removeLayer(m));
     routeWaypointMarkersRef.current = [];
 
-    if (currentRoute && currentRoute.length >= 2) {
+    if (currentRoute && currentRoute.length >= 2 && nextWaypointIndex < currentRoute.length) {
       const coords = currentRoute
         .map((nid) => getNodeById(nid, CAMPUS_NODES))
         .filter(Boolean)

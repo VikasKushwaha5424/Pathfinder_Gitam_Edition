@@ -21,21 +21,29 @@ def load_npcs(path: str = "npcs.json"):
 
 
 session_memories = {}
+SESSION_TTL = 7200
 
 
 def get_or_create_session(session_id: str, npc: str):
-    if session_id not in session_memories:
-        session_memories[session_id] = {
-            "last_active": time.time(),
-            "data": {k: [] for k in NPC_PROMPTS.keys()},
-        }
-    session_memories[session_id]["last_active"] = time.time()
+    now = time.time()
+    if session_id in session_memories:
+        if now - session_memories[session_id]["last_active"] > SESSION_TTL:
+            del session_memories[session_id]
+        else:
+            session_memories[session_id]["last_active"] = now
+            if npc not in session_memories[session_id]["data"]:
+                session_memories[session_id]["data"][npc] = []
+            return session_memories[session_id]["data"][npc]
+    session_memories[session_id] = {
+        "last_active": now,
+        "data": {k: [] for k in NPC_PROMPTS.keys()},
+    }
     if npc not in session_memories[session_id]["data"]:
         session_memories[session_id]["data"][npc] = []
     return session_memories[session_id]["data"][npc]
 
 
-async def clean_old_sessions(ttl: int = 3600):
+async def clean_old_sessions(ttl: int = 300):
     while True:
         await asyncio.sleep(ttl)
         now = time.time()

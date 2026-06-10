@@ -11,27 +11,23 @@ export default function useBattery() {
       return;
     }
 
-    let battery = null;
-
-    const update = (b) => {
+    const onLevelChange = (b) => {
       setLevel(b.level);
+      setSupported(true);
+    };
+
+    const onChargingChange = (b) => {
       setCharging(b.charging);
       setSupported(true);
     };
 
-    navigator.getBattery().then((b) => {
-      battery = b;
-      update(b);
-      b.addEventListener('levelchange', () => update(b));
-      b.addEventListener('chargingchange', () => update(b));
+    navigator.getBattery().then((battery) => {
+      setLevel(battery.level);
+      setCharging(battery.charging);
+      setSupported(true);
+      battery.addEventListener('levelchange', () => onLevelChange(battery));
+      battery.addEventListener('chargingchange', () => onChargingChange(battery));
     });
-
-    return () => {
-      if (battery) {
-        battery.removeEventListener('levelchange', () => update(battery));
-        battery.removeEventListener('chargingchange', () => update(battery));
-      }
-    };
   }, []);
 
   return { level, charging, isLow: level < 0.2 && !charging, supported };

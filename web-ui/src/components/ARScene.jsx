@@ -3,12 +3,13 @@ import MayaCharacter from './MayaCharacter';
 import NavigationArrow from './NavigationArrow';
 import ARTrail from './ARTrail';
 import { CAMPUS_LOCATIONS, CAMPUS_NODES } from '../data/config';
-import { calculateBearing, calculateDistance, computeTurnAngle, getDirectionLabel } from '../utils/navigation';
+import { calculateBearing, calculateDistance, computeTurnAngle, getDirectionLabel, getVerticalDirection } from '../utils/navigation';
 import { getNodeById } from '../utils/pathfinding';
 
 export default function ARScene({
   onCharacterClick, isSpeaking, destination, location, trailPoints,
   currentRoute, nextWaypointIndex, routeStatus, currentNodeId,
+  userLatitude, userLongitude,
 }) {
   const sceneRef = useRef(null);
 
@@ -38,22 +39,27 @@ export default function ARScene({
     );
 
     const dist = calculateDistance(
-      originNode.lat, originNode.lng,
+      userLatitude || originNode.lat, userLongitude || originNode.lng,
       nextNode.lat, nextNode.lng
     );
 
     let directionLabel = '';
-    if (prevNode && currNode) {
-      const turnAngle = computeTurnAngle(
-        prevNode.lat, prevNode.lng,
-        currNode.lat, currNode.lng,
-        nextNode.lat, nextNode.lng
-      );
-      directionLabel = getDirectionLabel(turnAngle);
+    if (currNode && nextNode) {
+      const vertical = getVerticalDirection(currNode.floor, nextNode.floor);
+      if (vertical) {
+        directionLabel = vertical;
+      } else if (prevNode && currNode) {
+        const turnAngle = computeTurnAngle(
+          prevNode.lat, prevNode.lng,
+          currNode.lat, currNode.lng,
+          nextNode.lat, nextNode.lng
+        );
+        directionLabel = getDirectionLabel(turnAngle);
+      }
     }
 
     return { nextNode, bearing, distance: dist, directionLabel };
-  }, [currentRoute, nextWaypointIndex]);
+  }, [currentRoute, nextWaypointIndex, userLatitude, userLongitude]);
 
   const arrowBearing = useMemo(() => {
     if (currLoc && waypointData) {

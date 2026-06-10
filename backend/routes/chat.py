@@ -124,7 +124,7 @@ async def generate_response(user_input: UserInput):
         if len(history) > 10:
             del history[:-10]
 
-        header = reply_text[:1000] + "..." if len(reply_text) > 1000 else reply_text
+        header = reply_text[:300] + "..." if len(reply_text) > 300 else reply_text
         encoded = urllib.parse.quote(header)
 
     except Exception as e:

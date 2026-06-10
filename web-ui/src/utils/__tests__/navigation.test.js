@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateBearing, calculateDistance, computeTurnAngle, getDirectionLabel, getTurnIntensity } from '../navigation';
+import { calculateBearing, calculateDistance, computeTurnAngle, getDirectionLabel, getTurnIntensity, getVerticalDirection } from '../navigation';
 
 describe('calculateBearing', () => {
   it('returns 0 for due north', () => {
@@ -106,26 +106,28 @@ describe('computeTurnAngle', () => {
 });
 
 describe('getDirectionLabel', () => {
-  it('returns Turn Around for >150', () => {
+  it('returns Turn Around for >=150', () => {
+    expect(getDirectionLabel(150)).toBe('Turn Around');
     expect(getDirectionLabel(160)).toBe('Turn Around');
     expect(getDirectionLabel(180)).toBe('Turn Around');
   });
 
-  it('returns Turn Around for <-150', () => {
+  it('returns Turn Around for <=-150', () => {
+    expect(getDirectionLabel(-150)).toBe('Turn Around');
     expect(getDirectionLabel(-160)).toBe('Turn Around');
     expect(getDirectionLabel(-180)).toBe('Turn Around');
   });
 
-  it('returns Turn Right for >30 and <=150', () => {
+  it('returns Turn Right for >30 and <150', () => {
     expect(getDirectionLabel(45)).toBe('Turn Right');
     expect(getDirectionLabel(90)).toBe('Turn Right');
-    expect(getDirectionLabel(150)).toBe('Turn Right');
+    expect(getDirectionLabel(149)).toBe('Turn Right');
   });
 
-  it('returns Turn Left for <-30 and >=-150', () => {
+  it('returns Turn Left for <-30 and >-150', () => {
     expect(getDirectionLabel(-45)).toBe('Turn Left');
     expect(getDirectionLabel(-90)).toBe('Turn Left');
-    expect(getDirectionLabel(-150)).toBe('Turn Left');
+    expect(getDirectionLabel(-149)).toBe('Turn Left');
   });
 
   it('returns Go Straight for small angles', () => {
@@ -163,5 +165,28 @@ describe('getTurnIntensity', () => {
     expect(getTurnIntensity(15)).toBe('straight');
     expect(getTurnIntensity(29)).toBe('straight');
     expect(getTurnIntensity(-29)).toBe('straight');
+  });
+});
+
+describe('getVerticalDirection', () => {
+  it('returns Go Upstairs when toFloor > fromFloor', () => {
+    expect(getVerticalDirection(0, 1)).toBe('Go Upstairs');
+    expect(getVerticalDirection(1, 2)).toBe('Go Upstairs');
+  });
+
+  it('returns Go Downstairs when toFloor < fromFloor', () => {
+    expect(getVerticalDirection(1, 0)).toBe('Go Downstairs');
+    expect(getVerticalDirection(2, 1)).toBe('Go Downstairs');
+  });
+
+  it('returns null when same floor', () => {
+    expect(getVerticalDirection(0, 0)).toBeNull();
+    expect(getVerticalDirection(2, 2)).toBeNull();
+  });
+
+  it('returns null when floor is undefined', () => {
+    expect(getVerticalDirection(undefined, 0)).toBeNull();
+    expect(getVerticalDirection(0, undefined)).toBeNull();
+    expect(getVerticalDirection(undefined, undefined)).toBeNull();
   });
 });

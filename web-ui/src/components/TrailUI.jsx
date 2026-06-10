@@ -1,16 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function TrailUI({ activeTrailId, trailPoints, isRecording, savedTrails, stopTrail, loadTrail, clearTrail }) {
   const [loadInput, setLoadInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
+  const copyTimeoutRef = useRef(null);
+
+  useEffect(() => () => clearTimeout(copyTimeoutRef.current), []);
 
   const handleCopyId = async () => {
     if (!activeTrailId) return;
     try {
       await navigator.clipboard.writeText(activeTrailId);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       /* fallback */
     }
