@@ -253,14 +253,6 @@ function App() {
   }, [routeStatus, nextWaypointIndex, currentRoute, requestAnnouncement]);
 
   useEffect(() => {
-    if (!destination || !currentNodeId) return;
-    const route = currentRouteRef.current;
-    if (route) return;
-    const toNode = resolveNodeId(destination);
-    if (currentNodeId !== toNode) computeAndSetRoute(currentNodeId, toNode);
-  }, [destination, currentNodeId, resolveNodeId, computeAndSetRoute]);
-
-  useEffect(() => {
     if (routeStatus === 'arrived' && routeQueue.length > 0) {
       const [nextDest, ...rest] = routeQueue;
       setRouteQueue(rest);
@@ -283,9 +275,6 @@ function App() {
     setLocation(locId);
     setCurrentNodeId(nodeId);
     recordPointFromLoc(locId);
-    if (locId === destinationRef.current) {
-      setDestination(null);
-    }
 
     const rs = routeStatusRef.current;
     const route = currentRouteRef.current;
@@ -299,7 +288,6 @@ function App() {
       setNextWaypointIndex(nextIdx);
       if (nextIdx >= route.length) {
         setRouteStatus('arrived');
-        setDestination(null);
         clearRouteTimer();
         logTelemetryEvent('INFO', 'ROUTE', 'Destination reached');
       } else {

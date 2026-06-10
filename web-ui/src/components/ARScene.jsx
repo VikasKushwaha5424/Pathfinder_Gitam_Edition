@@ -121,7 +121,7 @@ export default function ARScene({
           <NavigationArrow
             rotationY={arrowBearing}
             visible={true}
-            color={routeStatus === 'off_route' ? '#f44336' : '#FF8C00'}
+            color={routeStatus === 'arrived' ? '#4CAF50' : (routeStatus === 'off_route' ? '#f44336' : '#FF8C00')}
             directionLabel={waypointData?.directionLabel || ''}
             distanceToNext={arrowDistance}
             isOffRoute={routeStatus === 'off_route'}
