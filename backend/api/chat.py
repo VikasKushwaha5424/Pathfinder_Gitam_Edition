@@ -3,6 +3,7 @@ import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
+from openai import BadRequestError
 
 import state
 from engine.pathfinding import find_path
@@ -66,6 +67,18 @@ async def generate_response(req: ChatRequest):
             tools=[NAVIGATE_TOOL],
             tool_choice='auto',
         )
+    except BadRequestError as e:
+        err_body = str(e.body).lower() if e.body else ''
+        is_tool_fail = 'tool_use_failed' in err_body or 'failed_generation' in err_body
+        if is_tool_fail:
+            response = await state.groq_client.chat.completions.create(
+                model=state.groq_model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=300,
+            )
+        else:
+            raise HTTPException(500, detail=str(e))
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -107,7 +120,7 @@ async def generate_response(req: ChatRequest):
                         if not reply_text:
                             loc_name = dest.replace('_', ' ').title()
                             steps_text = '. '.join(result['steps'])
-                            reply_text = f"Here's your route to the {loc_name}. {steps_text}. Total distance: {result['distance']} meters."
+                            reply_text = f"Pinging {loc_name} on your HUD. {steps_text}. Total distance: {result['distance']} meters."
                     history.append({
                         'role': 'tool',
                         'content': json.dumps({'distance': result.get('distance', 0), 'steps': result.get('steps', [])}),

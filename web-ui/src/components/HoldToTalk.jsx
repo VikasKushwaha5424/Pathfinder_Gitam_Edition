@@ -1,10 +1,11 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import { useMediaRecorder } from '../hooks/useMediaRecorder';
 
 export default function HoldToTalk({ onVoiceResult }) {
   const { startRecording, stopRecording } = useMediaRecorder();
   const recognitionRef = useRef(null);
   const cbRef = useRef(onVoiceResult);
+  const [listening, setListening] = useState(false);
 
   useEffect(() => {
     cbRef.current = onVoiceResult;
@@ -20,17 +21,24 @@ export default function HoldToTalk({ onVoiceResult }) {
     recognition.lang = 'en-US';
 
     recognition.onresult = (e) => {
+      setListening(false);
       const text = e.results?.[0]?.[0]?.transcript || '';
       if (text) cbRef.current?.(text);
     };
 
     recognition.onerror = () => {
+      setListening(false);
       recognitionRef.current = null;
+    };
+
+    recognition.onend = () => {
+      setListening(false);
     };
 
     recognitionRef.current = recognition;
 
     return () => {
+      setListening(false);
       if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch { /* ignore */ }
       }
@@ -38,6 +46,7 @@ export default function HoldToTalk({ onVoiceResult }) {
   }, []);
 
   const handleStart = useCallback(() => {
+    setListening(true);
     if (recognitionRef.current) {
       try {
         recognitionRef.current.start();
@@ -46,11 +55,12 @@ export default function HoldToTalk({ onVoiceResult }) {
     }
     startRecording({
       onData: (blob) => cbRef.current?.(blob),
-      onError: () => {},
+      onError: () => setListening(false),
     });
   }, [startRecording]);
 
   const handleStop = useCallback(() => {
+    setListening(false);
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch { /* ignore */ }
     } else {
@@ -60,7 +70,7 @@ export default function HoldToTalk({ onVoiceResult }) {
 
   return (
     <button
-      className="hold-to-talk"
+      className={`voice-orb ${listening ? 'listening' : ''}`}
       onTouchStart={(e) => { e.preventDefault(); handleStart(); }}
       onTouchEnd={(e) => { e.preventDefault(); handleStop(); }}
       onMouseDown={handleStart}
@@ -68,8 +78,7 @@ export default function HoldToTalk({ onVoiceResult }) {
       onMouseLeave={handleStop}
       aria-label="Hold to talk"
     >
-      <span className="ht-icon">🎙️</span>
-      <span className="ht-label">Hold to Talk</span>
+      <span className="vo-icon">🎙️</span>
     </button>
   );
 }

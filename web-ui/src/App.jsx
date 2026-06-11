@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import ChatOverlay from './components/ChatOverlay';
-import ChatInput from './components/ChatInput';
 import HoldToTalk from './components/HoldToTalk';
 import CampusMap from './components/CampusMap';
 import FloorPlanView from './components/FloorPlanView';
 import SettingsPanel from './components/SettingsPanel';
-import RoutePreview from './components/RoutePreview';
 import ETAOverlay from './components/ETAOverlay';
 import ClassStatus from './components/ClassStatus';
 import useTimetable from './hooks/useTimetable';
@@ -23,16 +21,16 @@ function App() {
 
   const [location, setLocation] = useState('');
   const [destination, setDestination] = useState(null);
-  const [mapVisible, setMapVisible] = useState(false);
+  const [mapVisible, setMapVisible] = useState(true);
   const [showFloorPlan, setShowFloorPlan] = useState(false);
 
   const [currentRoute, setCurrentRoute] = useState(null);
   const [routeStatus, setRouteStatus] = useState('idle');
   const [routeDistance, setRouteDistance] = useState(0);
   const [routeSteps, setRouteSteps] = useState([]);
-  const [showRoutePreview, setShowRoutePreview] = useState(false);
   const [routeFilters, setRouteFilters] = useState({ noStairs: false, wheelchair: false, noKeycard: false });
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
 
   const gpsLocatedRef = useRef(false);
   const recoveredRef = useRef(false);
@@ -55,13 +53,12 @@ function App() {
         setCurrentRoute(data.path);
         setRouteDistance(data.distance || 0);
         setRouteSteps(data.steps || []);
-        setRouteStatus('preview');
-        setShowRoutePreview(true);
+        setRouteStatus('active');
         setMapVisible(true);
         return data;
       }
     } catch (err) {
-      console.error('Route fetch failed:', err);
+      console.warn('Route fetch failed:', err);
     }
     return null;
   }, [latitude, longitude]);
@@ -103,14 +100,12 @@ function App() {
         const state = JSON.parse(saved);
         const age = Date.now() - state.timestamp;
         if (age < 30 * 60 * 1000 && state.routeStatus === 'active' && state.currentRoute) {
-          /* eslint-disable react-hooks/set-state-in-effect */
           setDestination(state.destination);
           setCurrentRoute(state.currentRoute);
           setRouteDistance(state.routeDistance);
           setRouteSteps(state.routeSteps);
           setRouteStatus('active');
           setMapVisible(true);
-          /* eslint-enable react-hooks/set-state-in-effect */
         } else {
           localStorage.removeItem('maya_nav_state');
         }
@@ -135,6 +130,7 @@ function App() {
       unlock.volume = 0;
       window.speechSynthesis.speak(unlock);
     }
+
     const userMsg = { id: Date.now(), sender: 'user', text, npc: 'maya' };
     setChatHistory((prev) => [...prev, userMsg]);
     setIsThinking(true);
@@ -171,7 +167,7 @@ function App() {
         setCurrentRoute(pathData);
         setRouteDistance(data.route.distance || 0);
         setRouteSteps(data.route.steps || []);
-        setRouteStatus('preview');
+        setRouteStatus('active');
         setMapVisible(true);
       }
 
@@ -186,6 +182,12 @@ function App() {
   }, [location, latitude, longitude]);
 
   const handleVoiceResult = useCallback(async (result) => {
+    if ('speechSynthesis' in window) {
+      const unlock = new SpeechSynthesisUtterance('');
+      unlock.volume = 0;
+      window.speechSynthesis.speak(unlock);
+    }
+
     if (typeof result === 'string') {
       handleSendText(result);
       return;
@@ -199,23 +201,15 @@ function App() {
         handleSendText(transcript);
       }
     } catch (err) {
-      console.error('Transcribe error:', err);
+      console.warn('Transcribe error:', err);
     }
   }, [handleSendText]);
-
-  const handleStartNavigation = useCallback(() => {
-    setRouteStatus('active');
-    setShowRoutePreview(false);
-    const state = { destination, currentRoute, routeDistance, routeSteps, routeStatus: 'active', timestamp: Date.now() };
-    try { localStorage.setItem('maya_nav_state', JSON.stringify(state)); } catch { /* localStorage unavailable */ }
-  }, [destination, currentRoute, routeDistance, routeSteps]);
 
   const handleCancelRoute = useCallback(() => {
     setCurrentRoute(null);
     setRouteDistance(0);
     setRouteSteps([]);
     setRouteStatus('idle');
-    setShowRoutePreview(false);
     setDestination(null);
     try { localStorage.removeItem('maya_nav_state'); } catch { /* localStorage unavailable */ }
   }, []);
@@ -228,6 +222,8 @@ function App() {
 
   const handleRecalculate = useCallback(async (dist) => {
     if (!destination) return;
+    setIsRecalculating(true);
+    setTimeout(() => setIsRecalculating(false), 4000);
     const msg = {
       id: Date.now(),
       sender: 'ai',
@@ -238,7 +234,6 @@ function App() {
     const result = await requestRoute(location || '', destination);
     if (result) {
       setRouteStatus('active');
-      setShowRoutePreview(false);
       const state = { destination, currentRoute: result.path, routeDistance: result.distance, routeSteps: result.steps, routeStatus: 'active', timestamp: Date.now() };
       try { localStorage.setItem('maya_nav_state', JSON.stringify(state)); } catch { /* localStorage unavailable */ }
     }
@@ -258,49 +253,54 @@ function App() {
     }
   }, [routeStatus, destination, currentRoute, routeDistance, routeSteps]);
 
+  const currentLocName = CAMPUS_LOCATIONS.find((l) => l.id === location)?.name || (location ? location.replace(/_/g, ' ') : '');
+
   return (
     <div className="app-container">
       {permissionDenied && (
         <div className="gps-permission-banner">
           <span>📍 Location access denied.</span>
-          <span>Please select your starting point from the dropdown.</span>
+          <span>Please select your starting point manually.</span>
         </div>
       )}
 
-      <div className="top-bar">
+      <div className="hud-top">
         <select
-          className="location-select"
+          className="location-pill"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
+          title="Current location"
         >
           {CAMPUS_LOCATIONS.map((loc) => (
             <option key={loc.id} value={loc.id}>{loc.name}</option>
           ))}
         </select>
 
-        {routeStatus !== 'idle' && (
-          <button className="stop-nav-btn" onClick={handleCancelRoute}>✕ Nav</button>
-        )}
+        <div className="hud-actions">
+          {routeStatus !== 'idle' && (
+            <button className="hud-btn cancel-nav" onClick={handleCancelRoute} title="Cancel navigation">✕</button>
+          )}
 
-        <button
-          className="map-toggle"
-          onClick={() => setMapVisible((v) => !v)}
-          title="Toggle campus map"
-        >🗺️</button>
+          {hasFloorPlan(location) && (
+            <button
+              className={`hud-btn ${showFloorPlan ? 'active' : ''}`}
+              onClick={() => setShowFloorPlan((v) => !v)}
+              title="Floor plan"
+            >🏛️</button>
+          )}
 
-        {hasFloorPlan(location) && (
           <button
-            className={`floorplan-toggle ${showFloorPlan ? 'active' : ''}`}
-            onClick={() => setShowFloorPlan((v) => !v)}
-            title="Show floor plan"
-          >🏛️</button>
-        )}
+            className={`hud-btn ${settingsVisible ? 'active' : ''}`}
+            onClick={() => setSettingsVisible((v) => !v)}
+            title="Route preferences"
+          >♿</button>
+        </div>
 
-        <button
-          className="settings-toggle"
-          onClick={() => setSettingsVisible((v) => !v)}
-          title="Route preferences"
-        >♿</button>
+        {isRecalculating && (
+          <div className="recalc-toast">
+            ⚠️ OFF ROUTE: RECALCULATING...
+          </div>
+        )}
       </div>
 
       <CampusMap
@@ -308,8 +308,6 @@ function App() {
         destinationId={destination}
         locations={CAMPUS_LOCATIONS}
         pois={CAMPUS_POI}
-        visible={mapVisible}
-        onClose={() => setMapVisible(false)}
         currentRoute={currentRoute}
         currentCoords={currentCoords}
       />
@@ -320,8 +318,12 @@ function App() {
         onClose={() => setShowFloorPlan(false)}
       />
 
-      {routeStatus === 'active' && currentRoute && (
-        <ETAOverlay visible currentRoute={currentRoute} />
+      {routeStatus === 'active' && (
+        <ETAOverlay
+          visible
+          currentRoute={currentRoute}
+          onCancel={handleCancelRoute}
+        />
       )}
 
       <ChatOverlay
@@ -330,13 +332,9 @@ function App() {
         chatHistory={chatHistory}
         isThinking={isThinking}
         isPlaying={isPlaying}
-        location={location}
-      >
-        <div className="input-row">
-          <ChatInput onSendText={handleSendText} isThinking={isThinking} />
-        </div>
-        <HoldToTalk onVoiceResult={handleVoiceResult} />
-      </ChatOverlay>
+      />
+
+      <HoldToTalk onVoiceResult={handleVoiceResult} />
 
       {currentClass && (
         <ClassStatus
@@ -345,16 +343,6 @@ function App() {
           minsToNext={minsToNext}
           onNavigate={handleClassNavigate}
           onDismiss={() => {}}
-        />
-      )}
-
-      {showRoutePreview && currentRoute && (
-        <RoutePreview
-          currentRoute={currentRoute}
-          totalDistance={routeDistance}
-          steps={routeSteps}
-          onStart={handleStartNavigation}
-          onCancel={handleCancelRoute}
         />
       )}
 

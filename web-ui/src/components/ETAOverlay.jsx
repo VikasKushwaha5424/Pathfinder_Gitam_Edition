@@ -10,7 +10,7 @@ function haversine(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default function ETAOverlay({ visible, currentRoute }) {
+export default function ETAOverlay({ visible, currentRoute, onCancel }) {
   const [eta, setEta] = useState(null);
   const [distance, setDistance] = useState(null);
   const lastPosRef = useRef(null);
@@ -20,13 +20,12 @@ export default function ETAOverlay({ visible, currentRoute }) {
   const { latitude, longitude } = useGeolocation();
 
   const dest = useMemo(() => currentRoute?.[currentRoute.length - 1], [currentRoute]);
+  const destLabel = dest?.label || 'Destination';
 
   useEffect(() => {
     if (!visible || !dest?.lat) {
-      /* eslint-disable react-hooks/set-state-in-effect */
       setEta(null);
       setDistance(null);
-      /* eslint-enable react-hooks/set-state-in-effect */
       return;
     }
 
@@ -59,14 +58,24 @@ export default function ETAOverlay({ visible, currentRoute }) {
   if (!visible || (!eta && !distance && currentRoute?.length < 2)) return null;
 
   const displayDist = distance || 0;
-  const miles = displayDist >= 1000
+  const distStr = displayDist >= 1000
     ? `${(displayDist / 1000).toFixed(1)} km`
     : `${Math.round(displayDist)} m`;
 
   return (
-    <div className="eta-overlay">
-      <span className="eta-distance">{miles}</span>
-      {eta !== null && <span className="eta-time">~{eta} min</span>}
+    <div className="hud-card">
+      <div className="hud-card-body">
+        <span className="hud-dest">{destLabel.replace(/^Walk from /, '')}</span>
+        <span className="hud-divider">·</span>
+        <span className="hud-dist">{distStr}</span>
+        {eta !== null && (
+          <>
+            <span className="hud-divider">·</span>
+            <span className="hud-eta">~{eta} min</span>
+          </>
+        )}
+      </div>
+      <button className="hud-cancel" onClick={onCancel} aria-label="Cancel route">✕</button>
     </div>
   );
 }

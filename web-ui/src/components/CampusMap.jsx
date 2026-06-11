@@ -2,8 +2,6 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const ROUTE_COLORS = ['#FF0000', '#FFD700', '#2196F3', '#4CAF50', '#9C27B0', '#FF8C00', '#E91E63', '#FF69B4', '#808080', '#00FFFF'];
-
 function createIcon(html, className = '') {
   return L.divIcon({
     html,
@@ -14,29 +12,29 @@ function createIcon(html, className = '') {
 }
 
 const LOCATION_ICON = (color) => createIcon(
-  `<div style="width:16px;height:16px;background:${color};border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>`
+  `<div style="width:14px;height:14px;background:${color};border:2px solid rgba(255,255,255,0.6);border-radius:50%;box-shadow:0 0 6px ${color}40;"></div>`
 );
 
 const CURRENT_ICON = createIcon(
-  `<div style="width:20px;height:20px;background:#2196F3;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(33,150,243,0.4),0 2px 8px rgba(0,0,0,0.4);"></div>`,
+  `<div style="width:18px;height:18px;background:#2196F3;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(33,150,243,0.4),0 0 12px rgba(33,150,243,0.3);"></div>`,
   'current-marker'
 );
 
 const LIVE_ICON = createIcon(
-  `<div style="width:16px;height:16px;background:#2196F3;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(33,150,243,0.3),0 0 0 8px rgba(33,150,243,0.1),0 2px 8px rgba(0,0,0,0.4);animation:livePulse 2s infinite;"></div>`,
-  'current-marker live-marker'
+  `<div style="width:14px;height:14px;background:#2196F3;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(33,150,243,0.3),0 0 0 8px rgba(33,150,243,0.1),0 0 16px #2196F380;animation:livePulse 2s infinite;"></div>`,
+  'live-marker'
 );
 
 const DEST_ICON = createIcon(
-  `<div style="width:20px;height:20px;background:#4CAF50;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(76,175,80,0.4),0 2px 8px rgba(0,0,0,0.4);"></div>`,
+  `<div style="position:relative;width:18px;height:18px;"><div style="width:18px;height:18px;background:#4CAF50;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 3px rgba(76,175,80,0.4),0 0 12px #4CAF5060;position:relative;z-index:2;"></div><div class="ping-ring"></div></div>`,
   'dest-marker'
 );
 
 const POI_ICON = createIcon(
-  `<div style="width:8px;height:8px;background:#00BCD4;border:1px solid #fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`
+  `<div style="width:6px;height:6px;background:#00BCD4;border:1px solid rgba(255,255,255,0.4);border-radius:50%;box-shadow:0 0 4px #00BCD480;"></div>`
 );
 
-export default function CampusMap({ currentId, destinationId, locations, pois, visible, onClose, currentRoute, currentCoords }) {
+export default function CampusMap({ currentId, destinationId, locations, pois, currentRoute, currentCoords }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef({});
@@ -47,7 +45,6 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
   const routePolylineRef = useRef(null);
   const routeMarkersRef = useRef([]);
   const initializedRef = useRef(false);
-  const invalidateTimerRef = useRef(null);
 
   useEffect(() => {
     if (initializedRef.current || !containerRef.current) return;
@@ -58,20 +55,22 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
       attributionControl: true,
       minZoom: 15,
       maxZoom: 19,
+      maxBounds: [[17.770, 83.358], [17.794, 83.395]],
+      maxBoundsViscosity: 1.0,
     }).setView([17.782, 83.377], 16);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://openstreetmap.org/copyright">OSM</a>',
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; Esri',
       maxZoom: 19,
+      className: 'tactical-satellite',
     }).addTo(map);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     mapRef.current = map;
 
-    invalidateTimerRef.current = setTimeout(() => map.invalidateSize(), 300);
+    requestAnimationFrame(() => map.invalidateSize());
 
     return () => {
-      clearTimeout(invalidateTimerRef.current);
       map.remove();
       mapRef.current = null;
       initializedRef.current = false;
@@ -103,7 +102,7 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
 
     locations.forEach((loc) => {
       if (!loc.lat || !loc.lng || !loc.id) return;
-      const m = L.marker([loc.lat, loc.lng], { icon: LOCATION_ICON('#9E9E9E') }).addTo(map);
+      const m = L.marker([loc.lat, loc.lng], { icon: LOCATION_ICON('#666') }).addTo(map);
       m.bindTooltip(loc.name, { direction: 'top', offset: [0, -4] });
       markersRef.current[loc.id] = m;
     });
@@ -118,9 +117,7 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
       currentMarkerRef.current = null;
     }
 
-    if (currentCoords?.latitude && currentCoords?.longitude) {
-      return;
-    }
+    if (currentCoords?.latitude && currentCoords?.longitude) return;
 
     if (currentId) {
       const loc = locations.find((l) => l.id === currentId);
@@ -129,7 +126,6 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
           icon: CURRENT_ICON, zIndexOffset: 1000,
         }).addTo(map);
         currentMarkerRef.current.bindTooltip('You are here', { direction: 'top' });
-        map.setView([loc.lat, loc.lng], map.getZoom(), { animate: true });
       }
     }
   }, [currentId, locations, currentCoords]);
@@ -148,7 +144,6 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
         icon: LIVE_ICON, zIndexOffset: 1000,
       }).addTo(map);
       liveMarkerRef.current.bindTooltip('You are here', { direction: 'top' });
-      map.setView([currentCoords.latitude, currentCoords.longitude], map.getZoom(), { animate: true });
     }
   }, [currentCoords]);
 
@@ -168,6 +163,7 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
           icon: DEST_ICON, zIndexOffset: 1000,
         }).addTo(map);
         destMarkerRef.current.bindTooltip(loc.name, { direction: 'top' });
+        map.setView([loc.lat, loc.lng], map.getZoom(), { animate: true });
       }
     }
   }, [destinationId, locations]);
@@ -189,18 +185,19 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
         .map((n) => [n.lat, n.lng]);
 
       if (coords.length >= 2) {
-        const color = ROUTE_COLORS[0];
         routePolylineRef.current = L.polyline(coords, {
-          color, weight: 5, opacity: 0.85,
+          color: '#4CAF50', weight: 5, opacity: 0.9,
+          className: 'route-glow',
         }).addTo(map);
 
         currentRoute.forEach((node, i) => {
           if (!node.lat || !node.lng) return;
           const m = L.circleMarker([node.lat, node.lng], {
-            radius: i === 0 || i === currentRoute.length - 1 ? 6 : 4,
-            color,
-            fillColor: i === 0 ? '#2196F3' : i === currentRoute.length - 1 ? '#4CAF50' : color,
+            radius: i === 0 || i === currentRoute.length - 1 ? 5 : 3,
+            color: '#4CAF50',
+            fillColor: i === currentRoute.length - 1 ? '#4CAF50' : '#4CAF50',
             fillOpacity: 0.9, weight: 2,
+            className: 'route-glow',
           }).addTo(map);
           if (node.label) m.bindTooltip(node.label, { direction: 'top', offset: [0, -4] });
           routeMarkersRef.current.push(m);
@@ -212,14 +209,5 @@ export default function CampusMap({ currentId, destinationId, locations, pois, v
     }
   }, [currentRoute]);
 
-  return (
-    <div className={`campus-map ${visible ? 'visible' : ''}`}>
-      <div className="map-header">
-        <div className="map-drag-handle" />
-        <span className="map-title">Campus Map</span>
-        <button className="map-close-btn" onClick={onClose} aria-label="Close map">✕</button>
-      </div>
-      <div ref={containerRef} className="map-body" />
-    </div>
-  );
+  return <div ref={containerRef} className="campus-map" />;
 }
