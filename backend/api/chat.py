@@ -37,7 +37,11 @@ async def generate_response(req: ChatRequest):
                     'destination': {
                         'type': 'string',
                         'description': f'The destination name. Valid locations: {", ".join(get_all_names())}',
-                    }
+                    },
+                    'accessibility': {
+                        'type': 'string',
+                        'description': 'Accessibility needs: wheelchair, no_stairs, or no_keycard. Omit if not needed.',
+                    },
                 },
                 'required': ['destination'],
             },
@@ -80,8 +84,16 @@ async def generate_response(req: ChatRequest):
                     args = json.loads(tc.function.arguments)
                     dest = args.get('destination', '')
                     to_node = find_node_id(dest) or dest
-                    from_node = req.location or ''
-                    result = find_path(from_node, to_node)
+                    from_node = find_node_id(req.location) or req.location or ''
+                    filters = {}
+                    acc = args.get('accessibility', 'none')
+                    if acc == 'wheelchair':
+                        filters['wheelchair'] = True
+                    elif acc == 'no_stairs':
+                        filters['noStairs'] = True
+                    elif acc == 'no_keycard':
+                        filters['noKeycard'] = True
+                    result = find_path(from_node, to_node, filters)
                     if result['path']:
                         coords = [[p['lat'], p['lng']] for p in result['path']]
                         route_data = {
@@ -93,7 +105,8 @@ async def generate_response(req: ChatRequest):
                         }
                         if not reply_text:
                             loc_name = dest.replace('_', ' ').title()
-                            reply_text = f"I'll guide you to the {loc_name}! Here's the route on the map."
+                            steps_text = '. '.join(result['steps'])
+                            reply_text = f"Here's your route to the {loc_name}. {steps_text}. Total distance: {result['distance']} meters."
                 except Exception:
                     import traceback
                     traceback.print_exc()

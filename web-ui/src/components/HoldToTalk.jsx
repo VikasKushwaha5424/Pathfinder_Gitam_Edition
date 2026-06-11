@@ -1,18 +1,61 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useMediaRecorder } from '../hooks/useMediaRecorder';
 
-export default function HoldToTalk({ onAudioBlob }) {
+export default function HoldToTalk({ onVoiceResult }) {
   const { startRecording, stopRecording } = useMediaRecorder();
+  const recognitionRef = useRef(null);
+  const cbRef = useRef(onVoiceResult);
+
+  useEffect(() => {
+    cbRef.current = onVoiceResult;
+  }, [onVoiceResult]);
+
+  useEffect(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+
+    const recognition = new SR();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (e) => {
+      const text = e.results[0][0].transcript;
+      if (text) cbRef.current?.(text);
+    };
+
+    recognition.onerror = () => {
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch {}
+      }
+    };
+  }, []);
 
   const handleStart = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+        return;
+      } catch {}
+    }
     startRecording({
-      onData: (blob) => onAudioBlob?.(blob),
-      onError: (err) => console.error('Recording error:', err),
+      onData: (blob) => cbRef.current?.(blob),
+      onError: () => {},
     });
-  }, [startRecording, onAudioBlob]);
+  }, [startRecording]);
 
   const handleStop = useCallback(() => {
-    stopRecording();
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+    } else {
+      stopRecording();
+    }
   }, [stopRecording]);
 
   return (

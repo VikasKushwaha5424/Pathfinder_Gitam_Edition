@@ -151,10 +151,14 @@ function App() {
     }
   }, [location, latitude, longitude]);
 
-  const handleAudioBlob = useCallback(async (blob) => {
+  const handleVoiceResult = useCallback(async (result) => {
+    if (typeof result === 'string') {
+      handleSendText(result);
+      return;
+    }
     try {
       const fd = new FormData();
-      fd.append('file', blob, 'recording.webm');
+      fd.append('file', result, 'recording.webm');
       const res = await axios.post(`${API_BASE}/transcribe`, fd, { timeout: 15000 });
       const transcript = res.data.transcript;
       if (transcript && transcript !== '[Error transcribing audio]') {
@@ -255,7 +259,7 @@ function App() {
         <div className="input-row">
           <ChatInput onSendText={handleSendText} isThinking={isThinking} />
         </div>
-        <HoldToTalk onAudioBlob={handleAudioBlob} />
+        <HoldToTalk onVoiceResult={handleVoiceResult} />
       </ChatOverlay>
 
       {currentClass && (
