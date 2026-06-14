@@ -9,9 +9,11 @@ router = APIRouter(prefix='/api')
 
 class RouteRequest(BaseModel):
     from_node: Optional[str] = None
-    to_node: str
+    to_node: Optional[str] = None
     from_lat: Optional[float] = None
     from_lng: Optional[float] = None
+    to_lat: Optional[float] = None
+    to_lng: Optional[float] = None
     filters: dict = {}
 
 class POIQuery(BaseModel):
@@ -23,23 +25,32 @@ class NearestRequest(BaseModel):
 
 @router.post('/route')
 async def get_route(req: RouteRequest):
-    from_id = None
-    if req.from_node:
+    from engine.pathfinding import find_path_with_snapping
+
+    to_id = find_node_id(req.to_node) if req.to_node else None
+
+    # Snapping logic
+    if req.from_lat is not None and req.from_lng is not None:
+        result = find_path_with_snapping(req.from_lat, req.from_lng, req.to_lat, req.to_lng, to_node_id=to_id, filters=req.filters)
+    else:
         from_id = find_node_id(req.from_node) or req.from_node
-    if not from_id and req.from_lat is not None and req.from_lng is not None:
-        from engine.graph import find_nearest_node
-        nearest = find_nearest_node(req.from_lat, req.from_lng)
-        if nearest:
-            from_id = nearest['id']
-    if not from_id:
-        raise HTTPException(400, 'from_node is required (or provide from_lat/from_lng)')
+        if not from_id:
+            return {"found": False, "message": "from_node or from_lat/from_lng is required"}
+        if not to_id and not (req.to_lat and req.to_lng):
+            return {"found": False, "message": "to_node or to_lat/to_lng is required"}
+        
+        result = find_path(from_id, to_id, req.filters)
 
-    to_id = find_node_id(req.to_node) or req.to_node
-
-    result = find_path(from_id, to_id, req.filters)
-    if not result['path']:
-        raise HTTPException(404, f'No route found from {from_id} to {to_id}')
-    return result
+    if result.get('error'):
+        return {
+            "found": False,
+            "message": result.get('message', "No path available")
+        }
+        
+    return {
+        "found": True,
+        **result
+    }
 
 @router.post('/poi/search')
 async def search_poi(query: POIQuery):

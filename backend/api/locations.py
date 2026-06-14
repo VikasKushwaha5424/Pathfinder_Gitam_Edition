@@ -1,6 +1,5 @@
 from fastapi import APIRouter
-from engine.graph import get_nodes
-from engine.poi_search import load_pois
+from engine.graph import get_nodes, GEOJSON_MODE
 
 router = APIRouter()
 
@@ -17,8 +16,14 @@ CAMPUS_LOCATIONS = {
 
 @router.get('/locations')
 async def get_locations():
+    pois = load_pois()
+    if GEOJSON_MODE:
+        locs = [{'id': p['node_id'], 'name': p['name'], 'lat': p['lat'], 'lng': p['lng'], 'description': p.get('category', '')} for p in pois]
+    else:
+        locs = [{'id': k, **v} for k, v in CAMPUS_LOCATIONS.items()]
+    
     return {
-        'locations': [{'id': k, **v} for k, v in CAMPUS_LOCATIONS.items()],
+        'locations': locs,
         'nodes': get_nodes(),
-        'pois': load_pois(),
+        'pois': pois,
     }

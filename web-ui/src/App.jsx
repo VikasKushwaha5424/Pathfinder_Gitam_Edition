@@ -10,7 +10,7 @@ import ClassStatus from './components/ClassStatus';
 import useTimetable from './hooks/useTimetable';
 import useGeolocation from './hooks/useGeolocation';
 import useRouteRecalculation from './hooks/useRouteRecalculation';
-import { API_BASE, CAMPUS_LOCATIONS, CAMPUS_POI } from './data/config';
+import { API_BASE, CAMPUS_LOCATIONS as INITIAL_LOCATIONS, CAMPUS_POI as INITIAL_POI } from './data/config';
 import { hasFloorPlan } from './data/floorplans';
 import './App.css';
 
@@ -23,6 +23,9 @@ function App() {
   const [destination, setDestination] = useState(null);
   const [mapVisible, setMapVisible] = useState(true);
   const [showFloorPlan, setShowFloorPlan] = useState(false);
+
+  const [campusLocations, setCampusLocations] = useState(INITIAL_LOCATIONS);
+  const [campusPoi, setCampusPoi] = useState(INITIAL_POI);
 
   const [currentRoute, setCurrentRoute] = useState(null);
   const [routeStatus, setRouteStatus] = useState('idle');
@@ -70,6 +73,17 @@ function App() {
         sessionIdRef.current = res.data.session_id;
       } catch {
         sessionIdRef.current = 'fallback_' + Date.now();
+      }
+      try {
+        const resLocations = await axios.get(`${API_BASE}/locations`, { timeout: 5000 });
+        if (resLocations.data.locations) {
+            setCampusLocations([{ id: '', name: '📍 Auto Detect' }, ...resLocations.data.locations]);
+        }
+        if (resLocations.data.pois) {
+            setCampusPoi(resLocations.data.pois);
+        }
+      } catch (err) {
+        console.warn('Failed to load locations from backend:', err);
       }
     };
     init();
@@ -253,7 +267,7 @@ function App() {
     }
   }, [routeStatus, destination, currentRoute, routeDistance, routeSteps]);
 
-  const currentLocName = CAMPUS_LOCATIONS.find((l) => l.id === location)?.name || (location ? location.replace(/_/g, ' ') : '');
+  const currentLocName = campusLocations.find((l) => l.id === location)?.name || (location ? location.replace(/_/g, ' ') : '');
 
   return (
     <div className="app-container">
@@ -271,7 +285,7 @@ function App() {
           onChange={(e) => setLocation(e.target.value)}
           title="Current location"
         >
-          {CAMPUS_LOCATIONS.map((loc) => (
+          {campusLocations.map((loc) => (
             <option key={loc.id} value={loc.id}>{loc.name}</option>
           ))}
         </select>
@@ -306,8 +320,8 @@ function App() {
       <CampusMap
         currentId={location}
         destinationId={destination}
-        locations={CAMPUS_LOCATIONS}
-        pois={CAMPUS_POI}
+        locations={campusLocations}
+        pois={campusPoi}
         currentRoute={currentRoute}
         currentCoords={currentCoords}
       />

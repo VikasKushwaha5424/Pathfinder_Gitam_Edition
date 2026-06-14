@@ -8,9 +8,14 @@ _pois = None
 def load_pois():
     global _pois
     if _pois is None:
-        path = os.path.join(DATA_DIR, 'poi.json')
-        with open(path, 'r', encoding='utf-8') as f:
-            _pois = json.load(f)
+        from engine.graph import GEOJSON_MODE
+        if GEOJSON_MODE:
+            from engine.graph import get_pois
+            _pois = get_pois()
+        else:
+            path = os.path.join(DATA_DIR, 'poi.json')
+            with open(path, 'r', encoding='utf-8') as f:
+                _pois = json.load(f)
     return _pois
 
 def search(query):

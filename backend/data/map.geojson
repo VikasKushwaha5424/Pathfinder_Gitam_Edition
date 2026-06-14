@@ -1,0 +1,2716 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.380357,
+                    17.781099
+                ]
+            },
+            "properties": {
+                "name": "Gate_1",
+                "Category": "Gate",
+                "Description": "gate facing rushikonda beach",
+                "marker-color": "#312E81",
+                "marker-size": "medium",
+                "marker-symbol": "gate",
+                "@id": "76635041-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.380357,
+                17.781099,
+                83.380357,
+                17.781099
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.380336,
+                    17.781389
+                ]
+            },
+            "properties": {
+                "name": "Ganesh temple",
+                "Category": "temple",
+                "Description": "beautiful temple of lord ganesh ",
+                "marker-color": "rgba(242, 155, 10, 1)",
+                "marker-size": "small",
+                "marker-symbol": "place-of-worship",
+                "@id": "76635042-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.380336,
+                17.781389,
+                83.380336,
+                17.781389
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.380478,
+                    17.783113
+                ]
+            },
+            "properties": {
+                "name": "Shanti Sadan",
+                "Category": "hostel",
+                "Description": " foreign student residence",
+                "marker-color": "rgba(162, 76, 242, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "home",
+                "@id": "76635043-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.380478,
+                17.783113,
+                83.380478,
+                17.783113
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.38017,
+                    17.780905
+                ]
+            },
+            "properties": {
+                "name": "Gandhi statue",
+                "Category": "statue",
+                "Description": "a statue of gandhi ji",
+                "marker-color": "rgba(129, 131, 134, 1)",
+                "marker-size": "small",
+                "marker-symbol": "landmark",
+                "@id": "76635044-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.38017,
+                17.780905,
+                83.38017,
+                17.780905
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.379705,
+                    17.783323
+                ]
+            },
+            "properties": {
+                "name": "Sadarma Sadan",
+                "Category": "mess,Administration,hostel",
+                "Description": "boys mess with hostel Administration office",
+                "marker-color": "rgba(162, 76, 242, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "home",
+                "@id": "76635045-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.379705,
+                17.783323,
+                83.379705,
+                17.783323
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            83.37912,
+                            17.783185
+                        ],
+                        [
+                            83.378562,
+                            17.78187
+                        ],
+                        [
+                            83.380086,
+                            17.781345
+                        ],
+                        [
+                            83.380581,
+                            17.7827
+                        ],
+                        [
+                            83.37912,
+                            17.783185
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Gitam Cricket Stadium",
+                "Category": "Ground",
+                "Description": "Cricket Stadium with net practice",
+                "fill": "rgba(153, 247, 106, 1)",
+                "fill-opacity": 0.3,
+                "stroke": "rgba(153, 247, 106, 1)",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "@id": "76635046-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378562,
+                17.781345,
+                83.380581,
+                17.783185
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            83.378783,
+                            17.784125
+                        ],
+                        [
+                            83.378551,
+                            17.783484
+                        ],
+                        [
+                            83.379019,
+                            17.783328
+                        ],
+                        [
+                            83.379259,
+                            17.783981
+                        ],
+                        [
+                            83.378783,
+                            17.784125
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "lawn tennis and pickleball court",
+                "Category": "Ground",
+                "Description": "lawn tennis and pickleball court",
+                "fill": "rgba(153, 247, 106, 1)",
+                "stroke": "rgba(153, 247, 106, 1)",
+                "fill-opacity": 0.3,
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "@id": "76635047-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378551,
+                17.783328,
+                83.379259,
+                17.784125
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.37933,
+                    17.783958
+                ]
+            },
+            "properties": {
+                "name": "Gate_3",
+                "Category": "Gate",
+                "marker-color": "#312E81",
+                "marker-size": "medium",
+                "marker-symbol": "gate",
+                "@id": "76635048-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.37933,
+                17.783958,
+                83.37933,
+                17.783958
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.37878,
+                    17.783034
+                ]
+            },
+            "properties": {
+                "name": "Kodi Ramakrishna Indoor Stadium",
+                "Category": "Indoor Stadium",
+                "Description": "Indoor Stadium with a gym ",
+                "marker-color": "rgba(187, 247, 201, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "landmark",
+                "@id": "76635049-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.37878,
+                17.783034,
+                83.37878,
+                17.783034
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.379242,
+                    17.783535
+                ]
+            },
+            "properties": {
+                "name": "open air gym",
+                "Category": "gym",
+                "Description": "a nice open air gym",
+                "marker-color": "rgba(187, 247, 201, 1)",
+                "marker-size": "small",
+                "@id": "7663504a-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.379242,
+                17.783535,
+                83.379242,
+                17.783535
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.378446,
+                    17.783856
+                ]
+            },
+            "properties": {
+                "name": "Ravindra Sagar Sadan ",
+                "Category": "hostel",
+                "Description": "Boys hostel",
+                "marker-color": "rgba(162, 76, 242, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "home",
+                "@id": "7663504b-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378446,
+                17.783856,
+                83.378446,
+                17.783856
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.378029,
+                    17.783551
+                ]
+            },
+            "properties": {
+                "name": "Vinay Sadan ",
+                "Category": "hostel",
+                "Description": "Boys hostel",
+                "marker-color": "rgba(162, 76, 242, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "home",
+                "@id": "7663504c-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378029,
+                17.783551,
+                83.378029,
+                17.783551
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.378213,
+                    17.783048
+                ]
+            },
+            "properties": {
+                "name": "School of law",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "7663504d-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378213,
+                17.783048,
+                83.378213,
+                17.783048
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.377386,
+                    17.783171
+                ]
+            },
+            "properties": {
+                "name": "School of Humanities and Social Science",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "7663504e-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.377386,
+                17.783171,
+                83.377386,
+                17.783171
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.377637,
+                    17.782761
+                ]
+            },
+            "properties": {
+                "name": "School of Business",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "7663504f-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.377637,
+                17.782761,
+                83.377637,
+                17.782761
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.377974,
+                    17.782818
+                ]
+            },
+            "properties": {
+                "name": "Open air auditorium",
+                "Category": "Auditorium",
+                "Description": "nice auditorium",
+                "marker-color": "rgba(249, 255, 85, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "building",
+                "@id": "76635050-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.377974,
+                17.782818,
+                83.377974,
+                17.782818
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.378493,
+                    17.782701
+                ]
+            },
+            "properties": {
+                "name": "NCC office",
+                "Category": "NCC",
+                "marker-color": "rgba(49, 57, 196, 1)",
+                "marker-size": "small",
+                "@id": "76635051-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378493,
+                17.782701,
+                83.378493,
+                17.782701
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            83.378781,
+                            17.782764
+                        ],
+                        [
+                            83.378362,
+                            17.782931
+                        ],
+                        [
+                            83.37813,
+                            17.782453
+                        ],
+                        [
+                            83.378454,
+                            17.782298
+                        ],
+                        [
+                            83.378337,
+                            17.781987
+                        ],
+                        [
+                            83.378441,
+                            17.781932
+                        ],
+                        [
+                            83.378781,
+                            17.782764
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "road",
+                "Category": "shop",
+                "Description": "Canteen,Amenity,foodcourt,shop",
+                "fill": "rgba(247, 213, 101, 1)",
+                "fill-opacity": 0.3,
+                "stroke": "rgba(247, 213, 101, 1)",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "@id": "76635052-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.37813,
+                17.781932,
+                83.378781,
+                17.782931
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.378409,
+                    17.782745
+                ]
+            },
+            "properties": {
+                "name": "Grill n Gossip",
+                "Category": "Canteen,Amenity,foodcourt,shop",
+                "marker-color": "rgba(205, 205, 176, 1)",
+                "marker-size": "medium",
+                "@id": "76635053-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378409,
+                17.782745,
+                83.378409,
+                17.782745
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.378343,
+                    17.782524
+                ]
+            },
+            "properties": {
+                "name": "venella canteen",
+                "Category": "Canteen,Amenity,foodcourt,shop",
+                "marker-color": "rgba(205, 205, 176, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "restaurant",
+                "@id": "76635054-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378343,
+                17.782524,
+                83.378343,
+                17.782524
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.376495,
+                    17.783015
+                ]
+            },
+            "properties": {
+                "name": "Venture Development Centre",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "76635055-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.376495,
+                17.783015,
+                83.376495,
+                17.783015
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.375636,
+                    17.783114
+                ]
+            },
+            "properties": {
+                "marker-color": "#312E81",
+                "marker-size": "medium",
+                "marker-symbol": "gate",
+                "name": "Gate_2",
+                "Category": "Gate",
+                "Description": "",
+                "@id": "76635056-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.375636,
+                17.783114,
+                83.375636,
+                17.783114
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.375375,
+                    17.782697
+                ]
+            },
+            "properties": {
+                "name": "DDS Canteen",
+                "Category": "mess",
+                "Description": "year 1 boys mess",
+                "marker-color": "rgba(162, 76, 242, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "home",
+                "@id": "76635057-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.375375,
+                17.782697,
+                83.375375,
+                17.782697
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            83.375785,
+                            17.782758
+                        ],
+                        [
+                            83.375171,
+                            17.781632
+                        ],
+                        [
+                            83.376105,
+                            17.781198
+                        ],
+                        [
+                            83.376696,
+                            17.782335
+                        ],
+                        [
+                            83.375785,
+                            17.782758
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "NTR garden",
+                "Category": "plantation",
+                "Description": "beatutiful garden and plantation",
+                "fill": "rgba(39, 255, 1, 1)",
+                "fill-opacity": 0.3,
+                "stroke": "rgba(39, 255, 1, 1)",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "@id": "76635058-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.375171,
+                17.781198,
+                83.376696,
+                17.782758
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.377149,
+                    17.782039
+                ]
+            },
+            "properties": {
+                "name": "Knowledge Resource Center",
+                "Category": "Library, Auditorium",
+                "Description": "library",
+                "marker-size": "medium",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-symbol": "library",
+                "@id": "76635059-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.377149,
+                17.782039,
+                83.377149,
+                17.782039
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.377702,
+                    17.78174
+                ]
+            },
+            "properties": {
+                "Description": "Two wheeler parking",
+                "Category": "parking",
+                "name": "central parking",
+                "marker-color": "rgba(150, 150, 165, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "parking",
+                "@id": "7663505a-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.377702,
+                17.78174,
+                83.377702,
+                17.78174
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.376834,
+                    17.7815
+                ]
+            },
+            "properties": {
+                "Category": "parking",
+                "name": "CB parking",
+                "marker-color": "rgba(150, 150, 165, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "parking",
+                "@id": "7663505b-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.376834,
+                17.7815,
+                83.376834,
+                17.7815
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.379063,
+                    17.780277
+                ]
+            },
+            "properties": {
+                "Category": "parking",
+                "name": "Dental parking",
+                "marker-color": "rgba(150, 150, 165, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "parking",
+                "@id": "7663505c-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.379063,
+                17.780277,
+                83.379063,
+                17.780277
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.37565,
+                    17.780151
+                ]
+            },
+            "properties": {
+                "Category": "parking",
+                "name": "ICT parking",
+                "marker-size": "medium",
+                "marker-symbol": "parking",
+                "marker-color": "rgba(150, 150, 165, 1)",
+                "@id": "7663505d-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.37565,
+                17.780151,
+                83.37565,
+                17.780151
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.37734,
+                    17.781272
+                ]
+            },
+            "properties": {
+                "name": "Talent cafe",
+                "Category": "Canteen,Amenity,foodcourt,shop",
+                "Description": "open air cafe",
+                "marker-color": "rgba(205, 205, 176, 1)",
+                "marker-size": "small",
+                "marker-symbol": "cafe",
+                "@id": "7663505e-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.37734,
+                17.781272,
+                83.37734,
+                17.781272
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            83.378496,
+                            17.781592
+                        ],
+                        [
+                            83.378277,
+                            17.781099
+                        ],
+                        [
+                            83.379025,
+                            17.780797
+                        ],
+                        [
+                            83.379232,
+                            17.781274
+                        ],
+                        [
+                            83.378496,
+                            17.781592
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "fill-opacity": 0.3,
+                "stroke": "rgba(39, 255, 1, 1)",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "fill": "rgba(39, 255, 1, 1)",
+                "name": "Dental ",
+                "Category": "park",
+                "Description": "nice beautiful park ",
+                "@id": "7663505f-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378277,
+                17.780797,
+                83.379232,
+                17.781592
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            83.377371,
+                            17.781567
+                        ],
+                        [
+                            83.376967,
+                            17.780779
+                        ],
+                        [
+                            83.377793,
+                            17.78042
+                        ],
+                        [
+                            83.37815,
+                            17.781209
+                        ],
+                        [
+                            83.377371,
+                            17.781567
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "name": "Gandhi park",
+                "Category": "park",
+                "fill": "rgba(39, 255, 1, 1)",
+                "fill-opacity": 0.3,
+                "stroke": "rgba(39, 255, 1, 1)",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "@id": "76635060-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.376967,
+                17.78042,
+                83.37815,
+                17.781567
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.379347,
+                    17.780952
+                ]
+            },
+            "properties": {
+                "name": "GITAM Bhavan",
+                "Category": "Administration",
+                "Description": "main office",
+                "marker-size": "medium",
+                "marker-color": "rgba(70, 67, 245, 1)",
+                "marker-symbol": "building",
+                "@id": "76635061-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.379347,
+                17.780952,
+                83.379347,
+                17.780952
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.37964,
+                    17.78097
+                ]
+            },
+            "properties": {
+                "name": "Gitam centre",
+                "Category": "Administration",
+                "marker-color": "rgba(70, 67, 245, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "building",
+                "@id": "76635062-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.37964,
+                17.78097,
+                83.37964,
+                17.78097
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.379742,
+                    17.781033
+                ]
+            },
+            "properties": {
+                "name": "union atm bank",
+                "Category": "bank",
+                "marker-color": "rgba(231, 108, 100, 1)",
+                "marker-size": "small",
+                "marker-symbol": "bank",
+                "@id": "76635063-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.379742,
+                17.781033,
+                83.379742,
+                17.781033
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.37976,
+                    17.780866
+                ]
+            },
+            "properties": {
+                "name": "indian post office",
+                "Category": "post office",
+                "marker-color": "rgba(231, 108, 100, 1)",
+                "marker-size": "small",
+                "marker-symbol": "post",
+                "@id": "76635064-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.37976,
+                17.780866,
+                83.37976,
+                17.780866
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.379142,
+                    17.779408
+                ]
+            },
+            "properties": {
+                "name": "Sadguru Sri Sainatha Sanstan",
+                "Category": "temple",
+                "Description": "a beautiuful sai ram temple",
+                "marker-color": "rgba(242, 155, 10, 1)",
+                "marker-size": "small",
+                "marker-symbol": "place-of-worship",
+                "@id": "76635065-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.379142,
+                17.779408,
+                83.379142,
+                17.779408
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.379028,
+                    17.779139
+                ]
+            },
+            "properties": {
+                "name": "Sewage treatment plant",
+                "Category": "treatment plant",
+                "marker-color": "#312E81",
+                "marker-size": "small",
+                "marker-symbol": "building",
+                "@id": "76635066-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.379028,
+                17.779139,
+                83.379028,
+                17.779139
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.377108,
+                    17.780333
+                ]
+            },
+            "properties": {
+                "name": "C V Raman bhavan",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "Category": "Academic",
+                "marker-symbol": "college",
+                "@id": "76635067-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.377108,
+                17.780333,
+                83.377108,
+                17.780333
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.376756,
+                    17.781093
+                ]
+            },
+            "properties": {
+                "name": "Sir Arthur Cotton Bhavan",
+                "Category": "Academic",
+                "marker-size": "medium",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-symbol": "college",
+                "@id": "76635068-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.376756,
+                17.781093,
+                83.376756,
+                17.781093
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.376332,
+                    17.780411
+                ]
+            },
+            "properties": {
+                "name": "ICT",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "76635069-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.376332,
+                17.780411,
+                83.376332,
+                17.780411
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.375209,
+                    17.781333
+                ]
+            },
+            "properties": {
+                "name": "Visweswaraya Bhavan",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "7663506a-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.375209,
+                17.781333,
+                83.375209,
+                17.781333
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.374989,
+                    17.780784
+                ]
+            },
+            "properties": {
+                "name": "School of Architecture",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "7663506b-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.374989,
+                17.780784,
+                83.374989,
+                17.780784
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.375664,
+                    17.780276
+                ]
+            },
+            "properties": {
+                "name": "Nirman Bhavan ",
+                "Category": "Utility",
+                "marker-color": "rgba(70, 67, 245, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "building",
+                "@id": "7663506c-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.375664,
+                17.780276,
+                83.375664,
+                17.780276
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.375714,
+                    17.780259
+                ]
+            },
+            "properties": {
+                "name": "Indian bank",
+                "Category": "bank",
+                "marker-color": "rgba(231, 108, 100, 1)",
+                "marker-size": "small",
+                "marker-symbol": "bank",
+                "@id": "7663506d-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.375714,
+                17.780259,
+                83.375714,
+                17.780259
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.375428,
+                    17.780016
+                ]
+            },
+            "properties": {
+                "name": "Industrial Enginerring Bhavan",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "7663506e-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.375428,
+                17.780016,
+                83.375428,
+                17.780016
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.376021,
+                    17.779906
+                ]
+            },
+            "properties": {
+                "name": "Aruku cafe",
+                "Category": "Academic",
+                "marker-color": "rgba(205, 205, 176, 1)",
+                "marker-size": "small",
+                "marker-symbol": "cafe",
+                "@id": "7663506f-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.376021,
+                17.779906,
+                83.376021,
+                17.779906
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.374615,
+                    17.78013
+                ]
+            },
+            "properties": {
+                "name": "School of Pharmarcy",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "76635070-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.374615,
+                17.78013,
+                83.374615,
+                17.78013
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.374109,
+                    17.780629
+                ]
+            },
+            "properties": {
+                "name": "Executive Residence",
+                "Category": "Residence",
+                "marker-color": "rgba(219, 121, 232, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "home",
+                "@id": "76635071-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.374109,
+                17.780629,
+                83.374109,
+                17.780629
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.374141,
+                    17.781957
+                ]
+            },
+            "properties": {
+                "name": "female hostel",
+                "Category": "mess,Administration,hostel",
+                "marker-color": "rgba(162, 76, 242, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "home",
+                "@id": "76635072-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.374141,
+                17.781957,
+                83.374141,
+                17.781957
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.374334,
+                    17.781066
+                ]
+            },
+            "properties": {
+                "name": "Swechha Waldorf Inspired School",
+                "Category": "school",
+                "marker-color": "rgba(66, 242, 203, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "school",
+                "@id": "76635073-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.374334,
+                17.781066,
+                83.374334,
+                17.781066
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.372949,
+                    17.781326
+                ]
+            },
+            "properties": {
+                "name": "DDS hostel",
+                "Category": "hostel",
+                "marker-color": "rgba(162, 76, 242, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "home",
+                "@id": "76635074-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.372949,
+                17.781326,
+                83.372949,
+                17.781326
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.378742,
+                    17.780383
+                ]
+            },
+            "properties": {
+                "name": "Dental collage and hospital",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "76635075-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.378742,
+                17.780383,
+                83.378742,
+                17.780383
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.374935,
+                    17.78047
+                ]
+            },
+            "properties": {
+                "name": "Central Research Lab 2",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "76635076-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.374935,
+                17.78047,
+                83.374935,
+                17.78047
+            ]
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.374862,
+                    17.780369
+                ]
+            },
+            "properties": {
+                "name": "Central Research Lab 1",
+                "Category": "Academic",
+                "marker-color": "rgba(13, 255, 247, 1)",
+                "marker-size": "medium",
+                "marker-symbol": "college",
+                "@id": "76635077-6646-11f1-a3a8-9d153e6a930d"
+            },
+            "bbox": [
+                83.374862,
+                17.780369,
+                83.374862,
+                17.780369
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "stroke": "rgba(255, 1, 1, 1)",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "Category": "road",
+                "vehicle allowed": "yes"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.375587,
+                        17.783151
+                    ],
+                    [
+                        83.375756,
+                        17.783049
+                    ],
+                    [
+                        83.375895,
+                        17.782964
+                    ],
+                    [
+                        83.376062,
+                        17.782868
+                    ],
+                    [
+                        83.376418,
+                        17.782685
+                    ],
+                    [
+                        83.376944,
+                        17.782445
+                    ],
+                    [
+                        83.377301,
+                        17.782289
+                    ],
+                    [
+                        83.377507,
+                        17.782202
+                    ],
+                    [
+                        83.377714,
+                        17.782116
+                    ],
+                    [
+                        83.377846,
+                        17.78206
+                    ],
+                    [
+                        83.377978,
+                        17.782001
+                    ],
+                    [
+                        83.378191,
+                        17.781908
+                    ],
+                    [
+                        83.378319,
+                        17.781847
+                    ],
+                    [
+                        83.378451,
+                        17.781787
+                    ],
+                    [
+                        83.378785,
+                        17.781639
+                    ],
+                    [
+                        83.380143,
+                        17.781156
+                    ],
+                    [
+                        83.380425,
+                        17.78106
+                    ]
+                ]
+            },
+            "bbox": [
+                83.375587,
+                17.78106,
+                83.380425,
+                17.783151
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "stroke": "rgba(255, 1, 1, 1)",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.380143,
+                        17.781156
+                    ],
+                    [
+                        83.380744,
+                        17.782741
+                    ]
+                ]
+            },
+            "bbox": [
+                83.380143,
+                17.781156,
+                83.380744,
+                17.782741
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Cricket stadium entrance",
+                "marker-color": "#312E81",
+                "marker-size": "medium",
+                "marker-symbol": "gate"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.379054,
+                    17.783019
+                ]
+            },
+            "bbox": [
+                83.379054,
+                17.783019,
+                83.379054,
+                17.783019
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "NTR garden enterace",
+                "marker-color": "#312E81",
+                "marker-size": "medium",
+                "marker-symbol": "gate"
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    83.376204,
+                    17.782547
+                ]
+            },
+            "bbox": [
+                83.376204,
+                17.782547,
+                83.376204,
+                17.782547
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "stroke": "rgba(255, 1, 1, 1)",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "vehicle allowed": "yes"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.380744,
+                        17.782741
+                    ],
+                    [
+                        83.380429,
+                        17.782864
+                    ],
+                    [
+                        83.379695,
+                        17.783078
+                    ],
+                    [
+                        83.379462,
+                        17.783156
+                    ],
+                    [
+                        83.379107,
+                        17.783276
+                    ],
+                    [
+                        83.379364,
+                        17.783964
+                    ]
+                ]
+            },
+            "bbox": [
+                83.379107,
+                17.782741,
+                83.380744,
+                17.783964
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "vehicle allowed": "yes"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.379107,
+                        17.783276
+                    ],
+                    [
+                        83.378807,
+                        17.783366
+                    ],
+                    [
+                        83.378467,
+                        17.783489
+                    ],
+                    [
+                        83.378233,
+                        17.783576
+                    ],
+                    [
+                        83.377873,
+                        17.783743
+                    ]
+                ]
+            },
+            "bbox": [
+                83.377873,
+                17.783276,
+                83.379107,
+                17.783743
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.378467,
+                        17.783489
+                    ],
+                    [
+                        83.378607,
+                        17.783806
+                    ],
+                    [
+                        83.378702,
+                        17.784054
+                    ]
+                ]
+            },
+            "bbox": [
+                83.378467,
+                17.783489,
+                83.378702,
+                17.784054
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.379107,
+                        17.783276
+                    ],
+                    [
+                        83.378971,
+                        17.783048
+                    ],
+                    [
+                        83.378451,
+                        17.781787
+                    ]
+                ]
+            },
+            "bbox": [
+                83.378451,
+                17.781787,
+                83.379107,
+                17.783276
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "vehicle allowed": "yes"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.378467,
+                        17.783489
+                    ],
+                    [
+                        83.378314,
+                        17.782992
+                    ],
+                    [
+                        83.378248,
+                        17.782846
+                    ],
+                    [
+                        83.37818,
+                        17.782684
+                    ],
+                    [
+                        83.378117,
+                        17.78257
+                    ],
+                    [
+                        83.378046,
+                        17.782435
+                    ],
+                    [
+                        83.377846,
+                        17.78206
+                    ]
+                ]
+            },
+            "bbox": [
+                83.377846,
+                17.78206,
+                83.378467,
+                17.783489
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "no",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.378248,
+                        17.782846
+                    ],
+                    [
+                        83.37871,
+                        17.782675
+                    ]
+                ]
+            },
+            "bbox": [
+                83.378248,
+                17.782675,
+                83.37871,
+                17.782846
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "no",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.37883,
+                        17.782913
+                    ],
+                    [
+                        83.378794,
+                        17.782848
+                    ],
+                    [
+                        83.37871,
+                        17.782675
+                    ],
+                    [
+                        83.378622,
+                        17.782486
+                    ],
+                    [
+                        83.378511,
+                        17.782268
+                    ],
+                    [
+                        83.378344,
+                        17.781877
+                    ],
+                    [
+                        83.378319,
+                        17.781847
+                    ]
+                ]
+            },
+            "bbox": [
+                83.378319,
+                17.781847,
+                83.37883,
+                17.782913
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.378117,
+                        17.78257
+                    ],
+                    [
+                        83.377699,
+                        17.782692
+                    ],
+                    [
+                        83.377587,
+                        17.782426
+                    ],
+                    [
+                        83.377507,
+                        17.782202
+                    ]
+                ]
+            },
+            "bbox": [
+                83.377507,
+                17.782202,
+                83.378117,
+                17.782692
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1,
+                "vehicle allowed": "yes"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.377873,
+                        17.783743
+                    ],
+                    [
+                        83.377683,
+                        17.783743
+                    ],
+                    [
+                        83.377536,
+                        17.783501
+                    ],
+                    [
+                        83.377329,
+                        17.783172
+                    ],
+                    [
+                        83.376944,
+                        17.782445
+                    ]
+                ]
+            },
+            "bbox": [
+                83.376944,
+                17.782445,
+                83.377873,
+                17.783743
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.375693,
+                        17.782944
+                    ],
+                    [
+                        83.375653,
+                        17.782961
+                    ],
+                    [
+                        83.375456,
+                        17.783024
+                    ],
+                    [
+                        83.374166,
+                        17.78274
+                    ],
+                    [
+                        83.373413,
+                        17.781295
+                    ],
+                    [
+                        83.373037,
+                        17.781449
+                    ]
+                ]
+            },
+            "bbox": [
+                83.373037,
+                17.781295,
+                83.375693,
+                17.783024
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.375756,
+                        17.783049
+                    ],
+                    [
+                        83.375693,
+                        17.782944
+                    ],
+                    [
+                        83.375629,
+                        17.782839
+                    ],
+                    [
+                        83.375515,
+                        17.782618
+                    ],
+                    [
+                        83.375205,
+                        17.782054
+                    ],
+                    [
+                        83.375054,
+                        17.781794
+                    ],
+                    [
+                        83.374864,
+                        17.78152
+                    ],
+                    [
+                        83.374219,
+                        17.781839
+                    ]
+                ]
+            },
+            "bbox": [
+                83.374219,
+                17.78152,
+                83.375756,
+                17.783049
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.377507,
+                        17.782202
+                    ],
+                    [
+                        83.377238,
+                        17.781616
+                    ],
+                    [
+                        83.377151,
+                        17.781473
+                    ],
+                    [
+                        83.377064,
+                        17.781329
+                    ],
+                    [
+                        83.376723,
+                        17.780742
+                    ]
+                ]
+            },
+            "bbox": [
+                83.376723,
+                17.780742,
+                83.377507,
+                17.782202
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.376944,
+                        17.782445
+                    ],
+                    [
+                        83.376491,
+                        17.78161
+                    ],
+                    [
+                        83.376121,
+                        17.781048
+                    ]
+                ]
+            },
+            "bbox": [
+                83.376121,
+                17.781048,
+                83.376944,
+                17.782445
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.376491,
+                        17.78161
+                    ],
+                    [
+                        83.377064,
+                        17.781329
+                    ]
+                ]
+            },
+            "bbox": [
+                83.376491,
+                17.781329,
+                83.377064,
+                17.78161
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "no",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.377151,
+                        17.781473
+                    ],
+                    [
+                        83.378111,
+                        17.781069
+                    ]
+                ]
+            },
+            "bbox": [
+                83.377151,
+                17.781069,
+                83.378111,
+                17.781473
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.380143,
+                        17.781156
+                    ],
+                    [
+                        83.379891,
+                        17.780544
+                    ],
+                    [
+                        83.37961,
+                        17.780655
+                    ],
+                    [
+                        83.379372,
+                        17.780582
+                    ],
+                    [
+                        83.379174,
+                        17.780656
+                    ],
+                    [
+                        83.378111,
+                        17.781069
+                    ],
+                    [
+                        83.378451,
+                        17.781787
+                    ]
+                ]
+            },
+            "bbox": [
+                83.378111,
+                17.780544,
+                83.380143,
+                17.781787
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.378111,
+                        17.781069
+                    ],
+                    [
+                        83.37779,
+                        17.780253
+                    ],
+                    [
+                        83.376723,
+                        17.780742
+                    ]
+                ]
+            },
+            "bbox": [
+                83.376723,
+                17.780253,
+                83.378111,
+                17.781069
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.379891,
+                        17.780544
+                    ],
+                    [
+                        83.379421,
+                        17.779477
+                    ],
+                    [
+                        83.379198,
+                        17.779544
+                    ],
+                    [
+                        83.377774,
+                        17.780082
+                    ]
+                ]
+            },
+            "bbox": [
+                83.377774,
+                17.779477,
+                83.379891,
+                17.780544
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.379174,
+                        17.780656
+                    ],
+                    [
+                        83.378916,
+                        17.7802
+                    ]
+                ]
+            },
+            "bbox": [
+                83.378916,
+                17.7802,
+                83.379174,
+                17.780656
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.379421,
+                        17.779477
+                    ],
+                    [
+                        83.379299,
+                        17.779173
+                    ],
+                    [
+                        83.379183,
+                        17.778932
+                    ],
+                    [
+                        83.378771,
+                        17.77911
+                    ],
+                    [
+                        83.378557,
+                        17.77945
+                    ],
+                    [
+                        83.37787,
+                        17.779685
+                    ],
+                    [
+                        83.37754,
+                        17.779769
+                    ],
+                    [
+                        83.376274,
+                        17.779905
+                    ]
+                ]
+            },
+            "bbox": [
+                83.376274,
+                17.778932,
+                83.379421,
+                17.779905
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.376723,
+                        17.780742
+                    ],
+                    [
+                        83.376121,
+                        17.781048
+                    ],
+                    [
+                        83.375705,
+                        17.781207
+                    ],
+                    [
+                        83.374864,
+                        17.78152
+                    ]
+                ]
+            },
+            "bbox": [
+                83.374864,
+                17.780742,
+                83.376723,
+                17.78152
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.374864,
+                        17.78152
+                    ],
+                    [
+                        83.374551,
+                        17.781067
+                    ],
+                    [
+                        83.374476,
+                        17.780959
+                    ],
+                    [
+                        83.374319,
+                        17.780704
+                    ],
+                    [
+                        83.374027,
+                        17.780262
+                    ],
+                    [
+                        83.375011,
+                        17.77981
+                    ],
+                    [
+                        83.375621,
+                        17.779827
+                    ],
+                    [
+                        83.375952,
+                        17.779819
+                    ],
+                    [
+                        83.376132,
+                        17.77984
+                    ],
+                    [
+                        83.376274,
+                        17.779905
+                    ]
+                ]
+            },
+            "bbox": [
+                83.374027,
+                17.77981,
+                83.376274,
+                17.78152
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.376723,
+                        17.780742
+                    ],
+                    [
+                        83.376466,
+                        17.780304
+                    ],
+                    [
+                        83.376274,
+                        17.779905
+                    ]
+                ]
+            },
+            "bbox": [
+                83.376274,
+                17.779905,
+                83.376723,
+                17.780742
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "yes",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.375704,
+                        17.781207
+                    ],
+                    [
+                        83.375214,
+                        17.78028
+                    ],
+                    [
+                        83.375536,
+                        17.780153
+                    ],
+                    [
+                        83.376274,
+                        17.779905
+                    ]
+                ]
+            },
+            "bbox": [
+                83.375214,
+                17.779905,
+                83.376274,
+                17.781207
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "no",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.374319,
+                        17.780704
+                    ],
+                    [
+                        83.374893,
+                        17.780416
+                    ],
+                    [
+                        83.375214,
+                        17.78028
+                    ]
+                ]
+            },
+            "bbox": [
+                83.374319,
+                17.78028,
+                83.375214,
+                17.780704
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "vehicle allowed": "no",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.374551,
+                        17.781067
+                    ],
+                    [
+                        83.374985,
+                        17.780848
+                    ]
+                ]
+            },
+            "bbox": [
+                83.374551,
+                17.780848,
+                83.374985,
+                17.781067
+            ]
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "road",
+                "Category": "road",
+                "stroke": "#312E81",
+                "stroke-opacity": 1,
+                "stroke-width": 1
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        83.37818,
+                        17.782684
+                    ],
+                    [
+                        83.378622,
+                        17.782486
+                    ]
+                ]
+            },
+            "bbox": [
+                83.37818,
+                17.782486,
+                83.378622,
+                17.782684
+            ]
+        }
+    ]
+}

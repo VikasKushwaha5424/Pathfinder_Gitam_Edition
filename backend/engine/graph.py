@@ -1,6 +1,7 @@
 import json, os
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
+GEOJSON_MODE = True
 
 def load_json(filename):
     path = os.path.join(DATA_DIR, filename)
@@ -16,15 +17,53 @@ _nodes = None
 _edges = None
 _adj = None
 _node_map = None
+_pois_from_geojson = None
+
+def _ensure_geojson_loaded():
+    global _nodes, _adj, _pois_from_geojson
+    if _nodes is None or _adj is None:
+        from .geojson_loader import build_graph_from_roads
+        _nodes, _adj, _pois_from_geojson = build_graph_from_roads()
+
+def get_pois():
+    if GEOJSON_MODE:
+        _ensure_geojson_loaded()
+        return _pois_from_geojson
+    return None
 
 def get_nodes():
     global _nodes
+    if GEOJSON_MODE:
+        _ensure_geojson_loaded()
+        return _nodes
     if _nodes is None:
         _nodes = load_json('nodes.json')
     return _nodes
 
 def get_edges():
     global _edges
+    if GEOJSON_MODE:
+        # derive edges from adjacency list
+        _ensure_geojson_loaded()
+        if _edges is None:
+            _edges = []
+            seen = set()
+            for source, targets in _adj.items():
+                for t in targets:
+                    target = t['node']
+                    k1, k2 = (source, target) if source < target else (target, source)
+                    if (k1, k2) not in seen:
+                        seen.add((k1, k2))
+                        _edges.append({
+                            'source': source,
+                            'target': target,
+                            'distance': t['distance'],
+                            'isStairs': t.get('isStairs', False),
+                            'requiresKeycard': t.get('requiresKeycard', False),
+                            'hasRamp': t.get('hasRamp', False),
+                            'hasElevator': t.get('hasElevator', False)
+                        })
+        return _edges
     if _edges is None:
         _edges = load_json('edges.json')
     return _edges
@@ -39,6 +78,9 @@ def get_node_map():
 
 def get_adjacency():
     global _adj
+    if GEOJSON_MODE:
+        _ensure_geojson_loaded()
+        return _adj
     if _adj is None:
         _adj = {}
         for e in get_edges():

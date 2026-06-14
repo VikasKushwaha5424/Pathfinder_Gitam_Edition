@@ -89,9 +89,16 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes routeDash {
+  to { stroke-dashoffset: 0; }
+}
+
 /* -- Glowing route polyline -- */
 .route-glow {
-  filter: drop-shadow(0 0 4px #4CAF50) drop-shadow(0 0 10px #4CAF5060);
+  stroke-dasharray: 8 4;
+  stroke-dashoffset: 24;
+  animation: routeDash 1s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(76, 175, 80, 0.8));
 }
 
 /* -- Destination ping ring -- */
