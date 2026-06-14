@@ -14,7 +14,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     a = math.sin(delta_phi / 2.0) ** 2 + \
         math.cos(phi1) * math.cos(phi2) * \
         math.sin(delta_lambda / 2.0) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(max(0, 1 - a)))
+    c = 2 * math.atan2(math.sqrt(max(0, a)), math.sqrt(max(0, 1 - a)))
 
     return R * c
 
@@ -276,7 +276,7 @@ def find_nearest_node(lat, lng):
         dlat = math.radians(n['lat'] - lat)
         dlng = math.radians(n['lng'] - lng)
         a = math.sin(dlat/2)**2 + math.cos(math.radians(lat)) * math.cos(math.radians(n['lat'])) * math.sin(dlng/2)**2
-        d = 6371000 * 2 * math.atan2(math.sqrt(a), math.sqrt(max(0, 1-a)))
+        d = 6371000 * 2 * math.atan2(math.sqrt(max(0, a)), math.sqrt(max(0, 1-a)))
         if d < best_dist:
             best_dist = d
             best = n

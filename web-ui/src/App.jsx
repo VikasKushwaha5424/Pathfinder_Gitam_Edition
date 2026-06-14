@@ -6,6 +6,7 @@ axios.defaults.headers.common['x-api-key'] = API_KEY;
 import ChatOverlay from './components/ChatOverlay';
 import HoldToTalk from './components/HoldToTalk';
 import CampusMap from './components/CampusMap';
+import RoutePanel from './components/RoutePanel';
 import SettingsPanel from './components/SettingsPanel';
 import ETAOverlay from './components/ETAOverlay';
 import ClassStatus from './components/ClassStatus';
@@ -42,6 +43,7 @@ function App() {
   const [routeSteps, setRouteSteps] = useState([]);
   const [routeFilters, setRouteFilters] = useState({ noStairs: false, wheelchair: false, noKeycard: false });
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [routePanelOpen, setRoutePanelOpen] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
 
   const gpsLocatedRef = useRef(false);
@@ -276,19 +278,19 @@ function App() {
       setIsThinking(false);
       let fullText = '';
       let speechBuffer = '';
-      let chunkBuffer = '';
+      let networkBuffer = '';
       let fallbackTimeout = null;
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
         
-        chunkBuffer += decoder.decode(value, { stream: true });
+        networkBuffer += decoder.decode(value, { stream: true });
         
-        let boundary = chunkBuffer.indexOf('\n\n');
+        let boundary = networkBuffer.indexOf('\n\n');
         while (boundary !== -1) {
-          const chunkStr = chunkBuffer.slice(0, boundary);
-          chunkBuffer = chunkBuffer.slice(boundary + 2);
+          const chunkStr = networkBuffer.slice(0, boundary);
+          networkBuffer = networkBuffer.slice(boundary + 2);
           
           const lines = chunkStr.split('\n');
           for (const line of lines) {
@@ -330,7 +332,9 @@ function App() {
                     label: data.route.steps?.[i] || `Step ${i + 1}`,
                     id: `wp_${i}`,
                   }));
+                  setDestination(data.route.to);
                   setCurrentRoute(pathData);
+                  setDestination(data.route.to);
                   setRouteDistance(data.route.distance || 0);
                   setRouteSteps(data.route.steps || []);
                   setRouteStatus('active');
@@ -339,7 +343,7 @@ function App() {
               } catch (e) { /* ignore parse errors for partial chunks */ }
             }
           }
-          boundary = chunkBuffer.indexOf('\n\n');
+          boundary = networkBuffer.indexOf('\n\n');
         }
       }
       
@@ -487,6 +491,8 @@ function App() {
         </select>
 
         <div className="hud-actions">
+          <button className="hud-btn" onClick={() => setRoutePanelOpen(v => !v)} title="Plan a route">🗺️</button>
+
           {routeStatus !== 'idle' && (
             <button className="hud-btn cancel-nav" onClick={handleCancelRoute} title="Cancel navigation">✕</button>
           )}
@@ -512,6 +518,17 @@ function App() {
           <div className="recalc-toast">
             ⚠️ OFF ROUTE: RECALCULATING...
           </div>
+        )}
+
+        {routePanelOpen && (
+          <RoutePanel
+            from={location}
+            onFromChange={setLocation}
+            onToChange={(id) => setDestination(id)}
+            locations={campusLocations}
+            onNavigate={(fromId, toId) => requestRoute(fromId, toId)}
+            onClose={() => setRoutePanelOpen(false)}
+          />
         )}
       </div>
 

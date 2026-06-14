@@ -175,11 +175,14 @@ export default function CampusMap({ currentId, destinationId, locations, pois, c
         )}
 
         {/* Render Destination Node */}
-        {destinationId && locations.find(l => l.id === destinationId) && (
+        {destinationId && (locations.find(l => l.id === destinationId) || pois?.find(p => p.node_id === destinationId)) && (
           (() => {
             const loc = locations.find(l => l.id === destinationId);
+            const poi = pois?.find(p => p.node_id === destinationId);
+            const found = loc || poi;
+            if (!found?.lat || !found?.lng) return null;
             return (
-              <Marker longitude={loc.lng} latitude={loc.lat} anchor="center" style={{zIndex: 1000}}>
+              <Marker longitude={found.lng} latitude={found.lat} anchor="center" style={{zIndex: 1000}}>
                 <div style={{ position: 'relative', width: '18px', height: '18px' }}>
                   <div style={{
                     width: '18px', height: '18px', background: '#4CAF50', 
