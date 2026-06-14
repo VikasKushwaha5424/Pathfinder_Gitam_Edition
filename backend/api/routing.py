@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from engine.pathfinding import find_path
-from engine.poi_search import search, find_by_name, find_node_id, get_all_names
+from engine.poi_search import search, find_node_id, get_all_names
 from fastapi.concurrency import run_in_threadpool
 
 router = APIRouter(prefix='/api')

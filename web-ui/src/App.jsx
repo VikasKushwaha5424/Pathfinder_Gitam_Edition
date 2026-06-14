@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import axios from 'axios';
 
-axios.defaults.headers.common['x-api-key'] = 'maya_secret_token';
+const API_KEY = import.meta.env.VITE_API_KEY || 'maya_secret_token';
+axios.defaults.headers.common['x-api-key'] = API_KEY;
 import ChatOverlay from './components/ChatOverlay';
 import HoldToTalk from './components/HoldToTalk';
 import CampusMap from './components/CampusMap';
@@ -121,7 +122,7 @@ function App() {
         const resLocations = await axios.get(`${API_BASE}/locations`, { timeout: 5000 });
         if (resLocations.data.locations) {
             setCampusLocations([{ id: '', name: '📍 Auto Detect' }, ...resLocations.data.locations]);
-            setCampusPois(resLocations.data.pois || []);
+            setCampusPoi(resLocations.data.pois || []);
             
             // Check for Ghost Nodes poisoning
             try {
@@ -255,7 +256,7 @@ function App() {
       
       const res = await fetch(`${API_BASE}/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': 'maya_secret_token' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
         body: JSON.stringify({
           text,
           session_id: sessionIdRef.current || 'default',

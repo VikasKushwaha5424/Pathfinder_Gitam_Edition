@@ -5,3 +5,4 @@ python-dotenv>=1.0
 openai>=1.0
 python-multipart>=0.0.31
 faster-whisper>=1.1
+tinydb>=4.8

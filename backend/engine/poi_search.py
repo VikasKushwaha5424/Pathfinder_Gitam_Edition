@@ -1,12 +1,9 @@
-import re
 import difflib
 
 from engine.graph import get_pois
 
 def load_pois():
     return get_pois()
-
-import difflib
 
 def search(query):
     if not query:

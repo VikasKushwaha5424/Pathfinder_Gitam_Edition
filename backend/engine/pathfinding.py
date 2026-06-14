@@ -1,5 +1,5 @@
 import heapq
-from engine.graph import get_adjacency, get_node_map, get_node_by_id
+from engine.graph import get_adjacency, get_node_map
 
 def haversine(lat1, lng1, lat2, lng2):
     import math
@@ -7,7 +7,7 @@ def haversine(lat1, lng1, lat2, lng2):
     dlat = math.radians(lat2 - lat1)
     dlng = math.radians(lng2 - lng1)
     a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng/2)**2
-    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(max(0, 1-a)))
 
 def heuristic(node_id, goal_id, node_map):
     a = node_map.get(node_id)

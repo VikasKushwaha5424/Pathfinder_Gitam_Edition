@@ -1,13 +1,16 @@
 import json
+import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
-from openai import BadRequestError
 
 import state
 from engine.pathfinding import find_path
 from engine.poi_search import find_node_id, get_all_names
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -143,6 +146,9 @@ async def generate_response(req: ChatRequest):
                             yield f"data: {json.dumps({'text': f'I could not find a location named {dest} on campus.'})}\n\n"
                             continue
                         from_node = find_node_id(req.location) or req.location or ''
+                        if not from_node:
+                            yield f"data: {json.dumps({'text': 'I need your location to give directions. Please select a starting point.'})}\n\n"
+                            continue
                         filters = {}
                         acc = args.get('accessibility', 'none')
                         if acc == 'wheelchair':
@@ -178,8 +184,9 @@ async def generate_response(req: ChatRequest):
                             'content': json.dumps({'distance': result.get('distance', 0), 'steps': result.get('steps', [])}),
                             'tool_call_id': tc['id'],
                         })
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.error(f"Route tool call failed: {e}")
+                        yield f"data: {json.dumps({'text': 'I had trouble finding that route. Please try again.'})}\n\n"
         
         history.append({'role': 'user', 'content': req.text})
         if full_text:
