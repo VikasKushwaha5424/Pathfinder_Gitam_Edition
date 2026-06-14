@@ -1,8 +1,10 @@
 import os, sys, asyncio
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi.responses import JSONResponse
 from openai import AsyncOpenAI
 import state
 from state import clean_old_sessions
@@ -38,6 +40,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class TokenAuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path in ["/generate", "/transcribe"]:
+            token = request.headers.get("x-api-key")
+            if token != "maya_secret_token":
+                return JSONResponse(status_code=403, content={"detail": "Forbidden: Invalid API Token"})
+        return await call_next(request)
+
+app.add_middleware(TokenAuthMiddleware)
 
 from api import health, locations, transcribe, chat, session, routing, admin
 

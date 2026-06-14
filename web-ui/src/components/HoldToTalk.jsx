@@ -1,11 +1,12 @@
 import { useCallback, useRef, useEffect, useState } from 'react';
-import { useMediaRecorder } from '../hooks/useMediaRecorder';
 
 export default function HoldToTalk({ onVoiceResult }) {
-  const { startRecording, stopRecording } = useMediaRecorder();
   const recognitionRef = useRef(null);
   const cbRef = useRef(onVoiceResult);
   const [listening, setListening] = useState(false);
+  
+  // 0.1s silent base64 audio to unlock iOS Safari audio context
+  const silentAudio = useMemo(() => new Audio('data:audio/mp3;base64,//OExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'), []);
 
   useEffect(() => {
     cbRef.current = onVoiceResult;
@@ -17,18 +18,23 @@ export default function HoldToTalk({ onVoiceResult }) {
 
     const recognition = new SR();
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.lang = 'en-US';
 
     recognition.onresult = (e) => {
-      setListening(false);
-      const text = e.results?.[0]?.[0]?.transcript || '';
-      if (text) cbRef.current?.(text);
+      // Extract the final transcript if available, otherwise latest interim
+      const text = Array.from(e.results)
+        .map(r => r[0].transcript)
+        .join('');
+      
+      if (text && e.results[0].isFinal) {
+          setListening(false);
+          cbRef.current?.(text);
+      }
     };
 
     recognition.onerror = () => {
       setListening(false);
-      recognitionRef.current = null;
     };
 
     recognition.onend = () => {
@@ -46,27 +52,25 @@ export default function HoldToTalk({ onVoiceResult }) {
   }, []);
 
   const handleStart = useCallback(() => {
-    setListening(true);
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.start();
+    // Play silent audio immediately to satisfy Safari's user-initiated audio rule
+    try { silentAudio.play().catch(()=>{}); } catch(e) {}
+    
+    if (!recognitionRef.current) {
+        alert("Speech recognition not supported on this browser.");
         return;
-      } catch { /* ignore */ }
     }
-    startRecording({
-      onData: (blob) => cbRef.current?.(blob),
-      onError: () => setListening(false),
-    });
-  }, [startRecording]);
+    setListening(true);
+    try {
+      recognitionRef.current.start();
+    } catch { /* ignore */ }
+  }, [silentAudio]);
 
   const handleStop = useCallback(() => {
     setListening(false);
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch { /* ignore */ }
-    } else {
-      stopRecording();
     }
-  }, [stopRecording]);
+  }, []);
 
   return (
     <button

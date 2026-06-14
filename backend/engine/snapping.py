@@ -53,7 +53,7 @@ def perpendicular_distance(lat, lng, lat1, lng1, lat2, lng2):
     dist = haversine_distance(lat, lng, snap_lat, snap_lng)
     return dist, snap_lat, snap_lng
 
-def snap_to_road(lat, lng, roads):
+def snap_to_road(lat, lng, active_route=None):
     """
     Finds the closest road segment to the given point using perpendicular projection.
     Returns {lat, lng, road_id, distance, heading, node1_id, node2_id}
@@ -85,8 +85,13 @@ def snap_to_road(lat, lng, roads):
             seen_edges.add(edge_key)
             
             dist, snap_lat, snap_lng = perpendicular_distance(lat, lng, u['lat'], u['lng'], v['lat'], v['lng'])
-            if dist < best_dist:
-                best_dist = dist
+            
+            effective_dist = dist
+            if active_route and (u_id in active_route or v_id in active_route):
+                effective_dist = max(0, dist - 15.0)
+
+            if effective_dist < best_dist:
+                best_dist = effective_dist
                 heading = calculate_heading(snap_lat, snap_lng, v['lat'], v['lng'])
                 best_snap = {
                     'lat': snap_lat,

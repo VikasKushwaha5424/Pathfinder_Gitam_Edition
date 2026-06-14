@@ -40,29 +40,33 @@ def extract_pois():
     pois = []
     
     for feature in data.get('features', []):
-        if feature.get('geometry', {}).get('type') == 'Point':
-            coords = feature['geometry']['coordinates']
+        geom_type = feature.get('geometry', {}).get('type')
+        coords = feature.get('geometry', {}).get('coordinates', [])
+        
+        # Handle both Points and Polygons (take the first point of the polygon)
+        if geom_type == 'Point':
             lng, lat = coords[0], coords[1]
-            props = feature.get('properties', {})
+        elif geom_type == 'Polygon' and len(coords) > 0 and len(coords[0]) > 0:
+            lng, lat = coords[0][0][0], coords[0][0][1] # Rough center/anchor point
+        else:
+            continue
             
-            # Use 'name' or 'title' or 'Name' etc.
-            name = props.get('name') or props.get('Name') or props.get('title') or 'Unknown POI'
-            category = props.get('category') or props.get('Category') or 'general'
-            
-            # Auto-generate aliases
-            parts = [p.lower() for p in name.split()]
-            aliases = [name.lower()] + parts
-            
-            pois.append({
-                'name': name,
-                'category': category,
-                'lat': lat,
-                'lng': lng,
-                'aliases': list(set(aliases)),
-                # We will assign node_id below based on nearest road node
-                'node_id': None,
-                'properties': props
-            })
+        props = feature.get('properties', {})
+        name = props.get('name') or props.get('Name') or props.get('title') or props.get('building_name') or props.get('label') or props.get('id') or 'Unknown POI'
+        category = props.get('category') or props.get('Category') or 'general'
+        
+        parts = [p.lower() for p in name.split()]
+        aliases = [name.lower()] + parts
+        
+        pois.append({
+            'name': name,
+            'category': category,
+            'lat': lat,
+            'lng': lng,
+            'aliases': list(set(aliases)),
+            'node_id': None,
+            'properties': props
+        })
     return pois
 
 def extract_roads():
@@ -71,18 +75,21 @@ def extract_roads():
     idx = 0
     
     for feature in data.get('features', []):
-        if feature.get('geometry', {}).get('type') == 'LineString':
-            coords = feature['geometry']['coordinates']
+        geom_type = feature.get('geometry', {}).get('type')
+        coords = feature.get('geometry', {}).get('coordinates', [])
+        props = feature.get('properties', {})
+        name = props.get('name') or props.get('Name') or 'road'
+        category = props.get('category') or props.get('Category') or 'road'
+
+        if geom_type == 'LineString':
             road_coords = [{'lat': c[1], 'lng': c[0]} for c in coords]
-            props = feature.get('properties', {})
-            roads.append({
-                'id': f"road_{idx}",
-                'name': props.get('name') or props.get('Name') or 'road',
-                'category': props.get('category') or props.get('Category') or 'road',
-                'coordinates': road_coords,
-                'properties': props
-            })
+            roads.append({'id': f"road_{idx}", 'name': name, 'category': category, 'coordinates': road_coords, 'properties': props})
             idx += 1
+        elif geom_type == 'MultiLineString':
+            for line in coords:
+                road_coords = [{'lat': c[1], 'lng': c[0]} for c in line]
+                roads.append({'id': f"road_{idx}", 'name': name, 'category': category, 'coordinates': road_coords, 'properties': props})
+                idx += 1
     return roads
 
 def build_graph_from_roads():
@@ -90,16 +97,17 @@ def build_graph_from_roads():
     
     # 1. Collect unique coordinate vertices
     # We use a rounded coordinate string to prevent float precision issues
-    def coord_key(lat, lng):
-        return f"{lat:.6f},{lng:.6f}"
+    def coord_key(lat, lng, level):
+        return f"{lat:.6f},{lng:.6f},{level}"
     
     vertex_map = {} # key -> node_id
     nodes_list = []
     
     node_counter = 0
     for road in roads:
+        level = road['properties'].get('level', 0)
         for c in road['coordinates']:
-            key = coord_key(c['lat'], c['lng'])
+            key = coord_key(c['lat'], c['lng'], level)
             if key not in vertex_map:
                 node_id = f"n_{node_counter}"
                 vertex_map[key] = node_id
@@ -107,6 +115,7 @@ def build_graph_from_roads():
                     'id': node_id,
                     'lat': c['lat'],
                     'lng': c['lng'],
+                    'level': level,
                     'type': 'road_vertex',
                     'label': ''
                 })
@@ -118,6 +127,7 @@ def build_graph_from_roads():
     for road in roads:
         coords = road['coordinates']
         props = road['properties']
+        level = props.get('level', 0)
         
         is_stairs = props.get('isStairs', False)
         req_keycard = props.get('requiresKeycard', False)
@@ -128,8 +138,8 @@ def build_graph_from_roads():
             c1 = coords[i]
             c2 = coords[i+1]
             
-            k1 = coord_key(c1['lat'], c1['lng'])
-            k2 = coord_key(c2['lat'], c2['lng'])
+            k1 = coord_key(c1['lat'], c1['lng'], level)
+            k2 = coord_key(c2['lat'], c2['lng'], level)
             
             id1 = vertex_map[k1]
             id2 = vertex_map[k2]
@@ -162,6 +172,26 @@ def build_graph_from_roads():
             adjacency_dict.setdefault(id1, []).append(edge_data1)
             adjacency_dict.setdefault(id2, []).append(edge_data2)
             
+    # Calculate connected components (Zones)
+    zone_map = {}
+    current_zone = 0
+    visited = set()
+    for node in nodes_list:
+        if node['id'] not in visited:
+            current_zone += 1
+            queue = [node['id']]
+            while queue:
+                curr = queue.pop(0)
+                if curr not in visited:
+                    visited.add(curr)
+                    zone_map[curr] = current_zone
+                    for edge in adjacency_dict.get(curr, []):
+                        if edge['node'] not in visited:
+                            queue.append(edge['node'])
+    
+    for n in nodes_list:
+        n['zone'] = zone_map.get(n['id'], 0)
+            
     # Snap POIs to nearest nodes to populate node_id and node label
     pois = extract_pois()
     for poi in pois:
@@ -173,8 +203,10 @@ def build_graph_from_roads():
                 best_dist = dist
                 best_node = n
         
-        if best_node:
+        if best_node and best_dist <= 50:
             poi['node_id'] = best_node['id']
             best_node['label'] = poi['name']
+        elif best_node:
+            print(f"Warning: POI {poi['name']} is {best_dist}m away from nearest road. Marked disconnected.")
             
     return nodes_list, adjacency_dict, pois

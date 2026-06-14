@@ -72,6 +72,14 @@ export default function CampusMap({ currentId, destinationId, locations, pois, c
           ];
         }, [[coordinates[0][0], coordinates[0][1]], [coordinates[0][0], coordinates[0][1]]]);
         
+        // Prevent zero-size bounding box crash
+        if (bounds[0][0] === bounds[1][0] && bounds[0][1] === bounds[1][1]) {
+          bounds[0][0] -= 0.001;
+          bounds[0][1] -= 0.001;
+          bounds[1][0] += 0.001;
+          bounds[1][1] += 0.001;
+        }
+        
         map.fitBounds(bounds, {
           padding: 50,
           maxZoom: 17,

@@ -58,34 +58,47 @@ async def generate_response(req: ChatRequest):
     user_prompt = location_note + f"\nUser says: {req.text}" if location_note else f"User says: {req.text}"
     messages.append({'role': 'user', 'content': user_prompt})
 
-    try:
-        response = await state.groq_client.chat.completions.create(
-            model=state.groq_model,
-            messages=messages,
-            temperature=0.7,
-            max_tokens=300,
-            tools=[NAVIGATE_TOOL],
-            tool_choice='auto',
-        )
-    except BadRequestError as e:
-        err_body = str(e.body).lower() if e.body else ''
-        is_tool_fail = 'tool_use_failed' in err_body or 'failed_generation' in err_body
-        if is_tool_fail:
+    import asyncio
+    max_retries = 3
+    response = None
+    
+    for attempt in range(max_retries):
+        try:
             response = await state.groq_client.chat.completions.create(
                 model=state.groq_model,
                 messages=messages,
                 temperature=0.7,
                 max_tokens=300,
+                tools=[NAVIGATE_TOOL],
+                tool_choice='auto',
             )
-        else:
-            raise HTTPException(500, detail=str(e))
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        err = str(e).lower()
-        if '429' in err or 'quota' in err or 'exhausted' in err:
-            raise HTTPException(429, detail='[ERROR_QUOTA_EXHAUSTED]')
-        raise HTTPException(500, detail=str(e))
+            break
+        except BadRequestError as e:
+            err_body = str(e.body).lower() if e.body else ''
+            is_tool_fail = 'tool_use_failed' in err_body or 'failed_generation' in err_body
+            if is_tool_fail:
+                response = await state.groq_client.chat.completions.create(
+                    model=state.groq_model,
+                    messages=messages,
+                    temperature=0.7,
+                    max_tokens=300,
+                )
+                break
+            else:
+                raise HTTPException(500, detail=str(e))
+        except Exception as e:
+            err = str(e).lower()
+            if '429' in err or 'quota' in err or 'exhausted' in err or 'rate limit' in err:
+                if attempt == max_retries - 1:
+                    return {'text_response': "The network is a bit crowded, give me a second.", 'route': None}
+                await asyncio.sleep(0.5 * (2 ** attempt))
+            else:
+                import traceback
+                traceback.print_exc()
+                raise HTTPException(500, detail=str(e))
+                
+    if not response:
+        return {'text_response': "The network is a bit crowded, give me a second.", 'route': None}
 
     choice = response.choices[0].message
     reply_text = choice.content or ''
@@ -135,5 +148,7 @@ async def generate_response(req: ChatRequest):
     history.append(assistant_msg)
     if len(history) > 10:
         del history[:-10]
+        
+    state.save_session(req.session_id, npc, history)
 
     return {'text_response': reply_text, 'route': route_data}

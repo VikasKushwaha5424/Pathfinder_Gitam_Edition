@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import axios from 'axios';
+
+axios.defaults.headers.common['x-api-key'] = 'maya_secret_token';
 import ChatOverlay from './components/ChatOverlay';
 import HoldToTalk from './components/HoldToTalk';
 import CampusMap from './components/CampusMap';
-import FloorPlanView from './components/FloorPlanView';
 import SettingsPanel from './components/SettingsPanel';
 import ETAOverlay from './components/ETAOverlay';
 import ClassStatus from './components/ClassStatus';
+import FloorPlanView from './components/FloorPlanView';
+import PermissionsModal from './components/PermissionsModal';
+import { runOfflineAStar } from './utils/pathfinding';
 import useTimetable from './hooks/useTimetable';
 import useGeolocation from './hooks/useGeolocation';
 import useRouteRecalculation from './hooks/useRouteRecalculation';
@@ -21,7 +25,10 @@ function App() {
 
   const [location, setLocation] = useState('');
   const [destination, setDestination] = useState(null);
-  const [mapVisible, setMapVisible] = useState(true);
+  const [mapVisible, setMapVisible] = useState(false);
+  const [permissionsDenied, setPermissionsDenied] = useState(false);
+  const [isIdle, setIsIdle] = useState(false);
+  const idleTimeout = useRef(null);
   const [showFloorPlan, setShowFloorPlan] = useState(false);
 
   const [campusLocations, setCampusLocations] = useState(INITIAL_LOCATIONS);
@@ -45,11 +52,18 @@ function App() {
 
   const sessionIdRef = useRef(null);
 
+  const currentRouteRef = useRef(null);
+  useEffect(() => {
+    currentRouteRef.current = currentRoute;
+  }, [currentRoute]);
+
   const requestRoute = useCallback(async (fromNode, toNode) => {
     try {
+      const activeRouteNodes = currentRouteRef.current ? currentRouteRef.current.map(n => n.id).filter(Boolean) : [];
       const res = await axios.post(`${API_BASE}/api/route`, {
         from_node: fromNode, to_node: toNode,
         from_lat: latitude, from_lng: longitude,
+        active_route: activeRouteNodes,
       }, { timeout: 10000 });
       const data = res.data;
       if (data.path?.length >= 2) {
@@ -61,7 +75,22 @@ function App() {
         return data;
       }
     } catch (err) {
-      console.warn('Route fetch failed:', err);
+      console.warn('Backend route fetch failed, falling back to offline JS pathfinder...', err);
+      try {
+         const offlineGraphStr = localStorage.getItem('campus_graph');
+         if (offlineGraphStr) {
+             const offlineGraph = JSON.parse(offlineGraphStr);
+             const result = runOfflineAStar(fromNode, toNode, offlineGraph.nodes, offlineGraph.adj);
+             if (result && result.path?.length >= 2) {
+                setCurrentRoute(result.path);
+                setRouteDistance(result.distance || 0);
+                setRouteSteps(result.steps || []);
+                setRouteStatus('active');
+                setMapVisible(true);
+                return result;
+             }
+         }
+      } catch (offlineErr) { console.error('Offline pathfinding failed', offlineErr); }
     }
     return null;
   }, [latitude, longitude]);
@@ -75,18 +104,68 @@ function App() {
         sessionIdRef.current = 'fallback_' + Date.now();
       }
       try {
+        const resGraph = await axios.get(`${API_BASE}/api/graph`, { timeout: 5000 });
+        if (resGraph.data) {
+          localStorage.setItem('campus_graph', JSON.stringify(resGraph.data));
+        }
+      } catch (e) { console.warn('Could not cache offline graph'); }
+      try {
         const resLocations = await axios.get(`${API_BASE}/locations`, { timeout: 5000 });
         if (resLocations.data.locations) {
             setCampusLocations([{ id: '', name: '📍 Auto Detect' }, ...resLocations.data.locations]);
-        }
-        if (resLocations.data.pois) {
-            setCampusPoi(resLocations.data.pois);
+            setCampusPois(resLocations.data.pois || []);
         }
       } catch (err) {
-        console.warn('Failed to load locations from backend:', err);
+        console.error('Failed to load locations', err);
       }
     };
     init();
+
+    // Check permissions
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'microphone' }).then(res => {
+        if (res.state === 'denied') setPermissionsDenied(true);
+        res.onchange = () => {
+          if (res.state === 'denied') setPermissionsDenied(true);
+        };
+      }).catch(()=>{});
+    }
+
+    // Ghost map cache check
+    axios.get(`${API_BASE}/api/version`).then(res => {
+      const serverVersion = res.data.version;
+      const localVersion = localStorage.getItem('map_version');
+      if (localVersion && serverVersion !== localVersion) {
+        if ('caches' in window) {
+           caches.keys().then(keys => {
+             Promise.all(keys.map(k => caches.delete(k))).then(() => {
+                localStorage.setItem('map_version', serverVersion);
+                window.location.reload();
+             });
+           });
+        } else {
+           localStorage.setItem('map_version', serverVersion);
+        }
+      } else if (!localVersion) {
+        localStorage.setItem('map_version', serverVersion);
+      }
+    }).catch(()=>{});
+
+    // Idle detector for thermal throttling
+    const resetIdle = () => {
+      setIsIdle(false);
+      clearTimeout(idleTimeout.current);
+      idleTimeout.current = setTimeout(() => setIsIdle(true), 10000);
+    };
+    window.addEventListener('touchstart', resetIdle);
+    window.addEventListener('mousemove', resetIdle);
+    resetIdle();
+    
+    return () => {
+      window.removeEventListener('touchstart', resetIdle);
+      window.removeEventListener('mousemove', resetIdle);
+      clearTimeout(idleTimeout.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -270,8 +349,10 @@ function App() {
   const currentLocName = campusLocations.find((l) => l.id === location)?.name || (location ? location.replace(/_/g, ' ') : '');
 
   return (
-    <div className="app-container">
-      {permissionDenied && (
+    <div className="app-container dark-mode">
+      <PermissionsModal open={permissionsDenied} onClose={() => setPermissionsDenied(false)} />
+
+      {permissionsDenied && (
         <div className="gps-permission-banner">
           <span>📍 Location access denied.</span>
           <span>Please select your starting point manually.</span>

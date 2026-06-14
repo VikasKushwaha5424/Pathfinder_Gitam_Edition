@@ -16,12 +16,21 @@ def heuristic(node_id, goal_id, node_map):
         return 0
     return haversine(a['lat'], a['lng'], b['lat'], b['lng'])
 
-def find_path(start_id, end_id, filters=None):
-    adj = get_adjacency()
-    node_map = get_node_map()
+def find_path(start_id, end_id, filters=None, node_map=None, adj=None):
+    if node_map is None:
+        node_map = get_node_map()
+    if adj is None:
+        adj = get_adjacency()
 
     if start_id not in adj or end_id not in adj:
         return {'path': [], 'distance': 0, 'steps': [], 'error': 'No_path_available', 'message': "The destination you're looking for isn't connected by pathways. Please try a different location."}
+
+    start_node = node_map.get(start_id, {})
+    end_node = node_map.get(end_id, {})
+    
+    # Check connected components (zones) to prevent Isolated Island CPU spikes
+    if start_node.get('zone', 0) != end_node.get('zone', 0):
+        return {'path': [], 'distance': 0, 'steps': [], 'error': 'No_path_available', 'message': "There is no connected path between these two locations."}
 
     if filters is None:
         filters = {}
@@ -90,67 +99,80 @@ def _generate_steps(path_ids, node_map):
     if len(path_ids) < 2:
         return []
     steps = []
+    
     for i in range(1, len(path_ids)):
-        prev = node_map.get(path_ids[i-1], {})
         curr = node_map.get(path_ids[i], {})
-        prev_label = prev.get('label', path_ids[i-1])
-        curr_label = curr.get('label', path_ids[i])
-        steps.append(f"Walk from {prev_label} to {curr_label}")
+        curr_label = curr.get('label', '')
+        
+        # Only output a step if we hit a named location, not an internal node (n_*)
+        if curr_label and not curr_label.startswith('n_'):
+            steps.append(f"Walk towards {curr_label}")
+            
+    # Ensure final destination step exists
+    end_label = node_map.get(path_ids[-1], {}).get('label', '')
+    if end_label and not end_label.startswith('n_'):
+        final_step = f"Arrive at {end_label}"
+        if not steps or steps[-1] != final_step:
+            steps.append(final_step)
+            
     return steps
 
-def find_path_with_snapping(start_lat, start_lng, end_lat, end_lng, to_node_id=None, filters=None):
+def find_path_with_snapping(start_lat, start_lng, end_lat, end_lng, to_node_id=None, filters=None, active_route=None):
     from engine.snapping import snap_to_road
-    adj = get_adjacency()
-    node_map = get_node_map()
+    global_adj = get_adjacency()
+    global_node_map = get_node_map()
     
-    start_snap = snap_to_road(start_lat, start_lng, [])
+    # Create thread-safe shallow overlays
+    adj = dict(global_adj)
+    node_map = dict(global_node_map)
+    
+    start_snap = snap_to_road(start_lat, start_lng, active_route)
     if not start_snap:
         return {'path': [], 'distance': 0, 'steps': [], 'error': 'No_path_available', 'message': "Couldn't snap start location to road."}
         
     start_id = "temp_start"
-    node_map[start_id] = {'id': start_id, 'lat': start_snap['lat'], 'lng': start_snap['lng'], 'label': 'Start'}
+    node_map[start_id] = {
+        'id': start_id, 'lat': start_snap['lat'], 'lng': start_snap['lng'], 
+        'label': 'Start', 'zone': node_map.get(start_snap['node1_id'], {}).get('zone', 0)
+    }
     
-    # Inject start node edges
+    # Inject start node edges cleanly into overlay
     adj[start_id] = [
         {'node': start_snap['node1_id'], 'distance': start_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True},
         {'node': start_snap['node2_id'], 'distance': start_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}
     ]
-    adj.setdefault(start_snap['node1_id'], []).append({'node': start_id, 'distance': start_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True})
-    adj.setdefault(start_snap['node2_id'], []).append({'node': start_id, 'distance': start_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True})
+    adj[start_snap['node1_id']] = list(adj.get(start_snap['node1_id'], [])) + [{'node': start_id, 'distance': start_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}]
+    adj[start_snap['node2_id']] = list(adj.get(start_snap['node2_id'], [])) + [{'node': start_id, 'distance': start_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}]
 
     end_id = to_node_id
     end_snap = None
     if not end_id and end_lat and end_lng:
-        end_snap = snap_to_road(end_lat, end_lng, [])
+        end_snap = snap_to_road(end_lat, end_lng, active_route)
         if end_snap:
             end_id = "temp_end"
-            node_map[end_id] = {'id': end_id, 'lat': end_snap['lat'], 'lng': end_snap['lng'], 'label': 'Destination'}
+            node_map[end_id] = {
+                'id': end_id, 'lat': end_snap['lat'], 'lng': end_snap['lng'], 
+                'label': 'Destination', 'zone': node_map.get(end_snap['node1_id'], {}).get('zone', 0)
+            }
             adj[end_id] = [
                 {'node': end_snap['node1_id'], 'distance': end_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True},
                 {'node': end_snap['node2_id'], 'distance': end_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}
             ]
-            adj.setdefault(end_snap['node1_id'], []).append({'node': end_id, 'distance': end_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True})
-            adj.setdefault(end_snap['node2_id'], []).append({'node': end_id, 'distance': end_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True})
+            adj[end_snap['node1_id']] = list(adj.get(end_snap['node1_id'], [])) + [{'node': end_id, 'distance': end_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}]
+            adj[end_snap['node2_id']] = list(adj.get(end_snap['node2_id'], [])) + [{'node': end_id, 'distance': end_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}]
 
-    try:
-        if not end_id:
-            return {'path': [], 'distance': 0, 'steps': [], 'error': 'No_path_available', 'message': "No destination provided."}
-        
-        result = find_path(start_id, end_id, filters)
-        result['start_heading'] = start_snap['heading']
-        result['snapped_start'] = {'lat': start_snap['lat'], 'lng': start_snap['lng']}
-        if end_snap:
-            result['snapped_end'] = {'lat': end_snap['lat'], 'lng': end_snap['lng']}
-        return result
-    finally:
-        # Cleanup
-        del node_map[start_id]
-        del adj[start_id]
-        adj[start_snap['node1_id']] = [e for e in adj[start_snap['node1_id']] if e['node'] != start_id]
-        adj[start_snap['node2_id']] = [e for e in adj[start_snap['node2_id']] if e['node'] != start_id]
-        
-        if end_snap and end_id == "temp_end":
-            del node_map[end_id]
-            del adj[end_id]
-            adj[end_snap['node1_id']] = [e for e in adj[end_snap['node1_id']] if e['node'] != end_id]
-            adj[end_snap['node2_id']] = [e for e in adj[end_snap['node2_id']] if e['node'] != end_id]
+            # Same-Segment Walk of Shame Shortcut
+            if set([start_snap['node1_id'], start_snap['node2_id']]) == set([end_snap['node1_id'], end_snap['node2_id']]):
+                dist = haversine(start_snap['lat'], start_snap['lng'], end_snap['lat'], end_snap['lng'])
+                adj[start_id].append({'node': end_id, 'distance': dist, 'isStairs': False, 'hasRamp': True, 'hasElevator': True})
+                adj[end_id].append({'node': start_id, 'distance': dist, 'isStairs': False, 'hasRamp': True, 'hasElevator': True})
+
+    if not end_id:
+        return {'path': [], 'distance': 0, 'steps': [], 'error': 'No_path_available', 'message': "No destination provided."}
+    
+    result = find_path(start_id, end_id, filters, node_map, adj)
+    result['start_heading'] = start_snap['heading']
+    result['snapped_start'] = {'lat': start_snap['lat'], 'lng': start_snap['lng']}
+    if end_snap:
+        result['snapped_end'] = {'lat': end_snap['lat'], 'lng': end_snap['lng']}
+    return result

@@ -14,6 +14,7 @@ class RouteRequest(BaseModel):
     from_lng: Optional[float] = None
     to_lat: Optional[float] = None
     to_lng: Optional[float] = None
+    active_route: list[str] = []
     filters: dict = {}
 
 class POIQuery(BaseModel):
@@ -31,7 +32,15 @@ async def get_route(req: RouteRequest):
 
     # Snapping logic
     if req.from_lat is not None and req.from_lng is not None:
-        result = find_path_with_snapping(req.from_lat, req.from_lng, req.to_lat, req.to_lng, to_node_id=to_id, filters=req.filters)
+        result = find_path_with_snapping(req.from_lat, req.from_lng, req.to_lat, req.to_lng, to_node_id=to_id, filters=req.filters, active_route=req.active_route)
+        if result.get('error') == 'No_path_available' and req.filters:
+            fallback = find_path_with_snapping(req.from_lat, req.from_lng, req.to_lat, req.to_lng, to_node_id=to_id, filters={}, active_route=req.active_route)
+            if fallback and fallback.get('path'):
+                result = {
+                    'found': False, 'path': [], 'distance': 0, 'steps': [], 
+                    'error': 'Inaccessible', 
+                    'message': "I found this location, but there are no accessible routes mapped to its entrance."
+                }
     else:
         from_id = find_node_id(req.from_node) or req.from_node
         if not from_id:
@@ -40,6 +49,14 @@ async def get_route(req: RouteRequest):
             return {"found": False, "message": "to_node or to_lat/to_lng is required"}
         
         result = find_path(from_id, to_id, req.filters)
+        if result.get('error') == 'No_path_available' and req.filters:
+            fallback = find_path(from_id, to_id, {})
+            if fallback and fallback.get('path'):
+                result = {
+                    'found': False, 'path': [], 'distance': 0, 'steps': [], 
+                    'error': 'Inaccessible', 
+                    'message': "I found this location, but there are no accessible routes mapped to its entrance."
+                }
 
     if result.get('error'):
         return {
@@ -60,6 +77,24 @@ async def search_poi(query: POIQuery):
 @router.get('/poi/list')
 async def list_poi():
     return {'names': get_all_names()}
+
+@router.get('/graph')
+async def get_graph():
+    from engine.graph import get_node_map, get_adjacency
+    return {'nodes': get_node_map(), 'adj': get_adjacency()}
+
+@router.get('/version')
+async def get_version():
+    import hashlib, os
+    try:
+        data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+        map_path = os.path.join(data_dir, 'map.geojson')
+        if os.path.exists(map_path):
+            with open(map_path, 'rb') as f:
+                return {'version': hashlib.md5(f.read()).hexdigest()}
+    except:
+        pass
+    return {'version': 'v1'}
 
 @router.post('/nearest')
 async def nearest_location(req: NearestRequest):

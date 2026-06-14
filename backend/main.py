@@ -19,8 +19,7 @@ def _ensure_venv():
             "\nRun: python -m venv venv && pip install -r requirements.txt",
         )
         sys.exit(1)
-    subprocess.run([venv_python] + sys.argv)
-    sys.exit()
+    os.execv(venv_python, [venv_python] + sys.argv)
 
 
 _ensure_venv()
@@ -29,4 +28,4 @@ import uvicorn
 
 if __name__ == "__main__":
     reload_enabled = os.getenv("UVICORN_RELOAD", "true").lower() == "true"
-    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=reload_enabled)
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=reload_enabled, reload_includes=["*.json", "*.geojson"])

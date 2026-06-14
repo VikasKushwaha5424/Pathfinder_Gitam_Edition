@@ -1,4 +1,5 @@
-import time, asyncio
+import time, asyncio, os
+from tinydb import TinyDB, Query
 
 groq_client = None
 groq_model = "llama-3.3-70b-versatile"
@@ -18,27 +19,42 @@ NPC_VOICES = {
     'maya': 'en-US-AriaNeural',
 }
 
-session_memories = {}
+DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'sessions.json')
+db = TinyDB(DB_PATH)
 
 def get_or_create_session(session_id, npc_id='maya'):
     now = time.time()
-    if session_id not in session_memories:
-        session_memories[session_id] = {'data': {}, 'created': now, 'last_active': now}
-    mem = session_memories[session_id]
-    mem['last_active'] = now
-    if npc_id not in mem['data']:
-        mem['data'][npc_id] = []
-    return mem['data'][npc_id]
+    Session = Query()
+    record = db.search(Session.session_id == session_id)
+    if not record:
+        new_record = {'session_id': session_id, 'data': {npc_id: []}, 'created': now, 'last_active': now}
+        db.insert(new_record)
+        return []
+    
+    mem = record[0]
+    db.update({'last_active': now}, Session.session_id == session_id)
+    return mem['data'].get(npc_id, [])
+
+def save_session(session_id, npc_id, history):
+    now = time.time()
+    Session = Query()
+    record = db.search(Session.session_id == session_id)
+    if record:
+        mem = record[0]
+        mem['data'][npc_id] = history
+        db.update({'data': mem['data'], 'last_active': now}, Session.session_id == session_id)
 
 async def clean_old_sessions():
     while True:
         try:
             await asyncio.sleep(300)
             now = time.time()
-            stale = [sid for sid, s in list(session_memories.items()) if now - s['last_active'] > 7200]
-            for sid in stale:
-                del session_memories[sid]
+            Session = Query()
+            # Find stale sessions (older than 2 hours = 7200 seconds)
+            stale = db.search(Session.last_active < now - 7200)
             if stale:
-                print(f"[GC] Cleaned {len(stale)} stale sessions")
+                stale_ids = [s['session_id'] for s in stale]
+                db.remove(Session.session_id.one_of(stale_ids))
+                print(f"[GC] Cleaned {len(stale)} stale sessions from TinyDB")
         except Exception as e:
             print(f"[GC] Error in session cleaner: {e}")
