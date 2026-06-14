@@ -137,12 +137,18 @@ def find_path_with_snapping(start_lat, start_lng, end_lat, end_lng, to_node_id=N
     }
     
     # Inject start node edges cleanly into overlay
-    adj[start_id] = [
-        {'node': start_snap['node1_id'], 'distance': start_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True},
-        {'node': start_snap['node2_id'], 'distance': start_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}
-    ]
-    adj[start_snap['node1_id']] = list(adj.get(start_snap['node1_id'], [])) + [{'node': start_id, 'distance': start_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}]
-    adj[start_snap['node2_id']] = list(adj.get(start_snap['node2_id'], [])) + [{'node': start_id, 'distance': start_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}]
+    def add_safe_edge(u, v, dist):
+        existing = adj.get(u, [])
+        filtered = [e for e in existing if e['node'] != v]
+        adj[u] = filtered + [{'node': v, 'distance': dist, 'isStairs': False, 'hasRamp': True, 'hasElevator': True}]
+
+    adj[start_id] = []
+    add_safe_edge(start_id, start_snap['node1_id'], start_snap['dist_to_node1'])
+    if start_snap['node1_id'] != start_snap['node2_id']:
+        add_safe_edge(start_id, start_snap['node2_id'], start_snap['dist_to_node2'])
+    add_safe_edge(start_snap['node1_id'], start_id, start_snap['dist_to_node1'])
+    if start_snap['node1_id'] != start_snap['node2_id']:
+        add_safe_edge(start_snap['node2_id'], start_id, start_snap['dist_to_node2'])
 
     end_id = to_node_id
     end_snap = None
@@ -154,12 +160,13 @@ def find_path_with_snapping(start_lat, start_lng, end_lat, end_lng, to_node_id=N
                 'id': end_id, 'lat': end_snap['lat'], 'lng': end_snap['lng'], 
                 'label': 'Destination', 'zone': node_map.get(end_snap['node1_id'], {}).get('zone', 0)
             }
-            adj[end_id] = [
-                {'node': end_snap['node1_id'], 'distance': end_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True},
-                {'node': end_snap['node2_id'], 'distance': end_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}
-            ]
-            adj[end_snap['node1_id']] = list(adj.get(end_snap['node1_id'], [])) + [{'node': end_id, 'distance': end_snap['dist_to_node1'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}]
-            adj[end_snap['node2_id']] = list(adj.get(end_snap['node2_id'], [])) + [{'node': end_id, 'distance': end_snap['dist_to_node2'], 'isStairs': False, 'hasRamp': True, 'hasElevator': True}]
+            adj[end_id] = []
+            add_safe_edge(end_id, end_snap['node1_id'], end_snap['dist_to_node1'])
+            if end_snap['node1_id'] != end_snap['node2_id']:
+                add_safe_edge(end_id, end_snap['node2_id'], end_snap['dist_to_node2'])
+            add_safe_edge(end_snap['node1_id'], end_id, end_snap['dist_to_node1'])
+            if end_snap['node1_id'] != end_snap['node2_id']:
+                add_safe_edge(end_snap['node2_id'], end_id, end_snap['dist_to_node2'])
 
             # Same-Segment Walk of Shame Shortcut
             if set([start_snap['node1_id'], start_snap['node2_id']]) == set([end_snap['node1_id'], end_snap['node2_id']]):

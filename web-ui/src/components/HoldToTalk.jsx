@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, useState } from 'react';
+import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 
 export default function HoldToTalk({ onVoiceResult }) {
   const recognitionRef = useRef(null);
@@ -52,6 +52,9 @@ export default function HoldToTalk({ onVoiceResult }) {
   }, []);
 
   const handleStart = useCallback(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
     // Play silent audio immediately to satisfy Safari's user-initiated audio rule
     try { silentAudio.play().catch(()=>{}); } catch(e) {}
     

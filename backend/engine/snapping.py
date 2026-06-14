@@ -24,7 +24,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     a = math.sin(delta_phi / 2.0) ** 2 + \
         math.cos(phi1) * math.cos(phi2) * \
         math.sin(delta_lambda / 2.0) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(max(0, 1 - a)))
     return R * c
 
 def perpendicular_distance(lat, lng, lat1, lng1, lat2, lng2):

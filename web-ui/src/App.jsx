@@ -10,6 +10,7 @@ import ETAOverlay from './components/ETAOverlay';
 import ClassStatus from './components/ClassStatus';
 import FloorPlanView from './components/FloorPlanView';
 import PermissionsModal from './components/PermissionsModal';
+import ErrorBoundary from './components/ErrorBoundary';
 import { runOfflineAStar } from './utils/pathfinding';
 import useTimetable from './hooks/useTimetable';
 import useGeolocation from './hooks/useGeolocation';
@@ -57,16 +58,23 @@ function App() {
     currentRouteRef.current = currentRoute;
   }, [currentRoute]);
 
+  const routeAbortRef = useRef(null);
+
   const requestRoute = useCallback(async (fromNode, toNode) => {
+    if (routeAbortRef.current) routeAbortRef.current.abort();
+    routeAbortRef.current = new AbortController();
+    const signal = routeAbortRef.current.signal;
+    
     try {
       const activeRouteNodes = currentRouteRef.current ? currentRouteRef.current.map(n => n.id).filter(Boolean) : [];
       const res = await axios.post(`${API_BASE}/api/route`, {
         from_node: fromNode, to_node: toNode,
         from_lat: latitude, from_lng: longitude,
         active_route: activeRouteNodes,
-      }, { timeout: 10000 });
+      }, { timeout: 10000, signal });
+      if (signal.aborted) return null;
       const data = res.data;
-      if (data.path?.length >= 2) {
+      if (data.path?.length >= 1) {
         setCurrentRoute(data.path);
         setRouteDistance(data.distance || 0);
         setRouteSteps(data.steps || []);
@@ -81,7 +89,7 @@ function App() {
          if (offlineGraphStr) {
              const offlineGraph = JSON.parse(offlineGraphStr);
              const result = runOfflineAStar(fromNode, toNode, offlineGraph.nodes, offlineGraph.adj);
-             if (result && result.path?.length >= 2) {
+             if (result && result.path?.length >= 1) {
                 setCurrentRoute(result.path);
                 setRouteDistance(result.distance || 0);
                 setRouteSteps(result.steps || []);
@@ -114,6 +122,18 @@ function App() {
         if (resLocations.data.locations) {
             setCampusLocations([{ id: '', name: '📍 Auto Detect' }, ...resLocations.data.locations]);
             setCampusPois(resLocations.data.pois || []);
+            
+            // Check for Ghost Nodes poisoning
+            try {
+              const navState = localStorage.getItem('maya_nav_state');
+              if (navState) {
+                const parsed = JSON.parse(navState);
+                if (parsed.destination && !resLocations.data.locations.find(l => l.id === parsed.destination)) {
+                  console.warn("Cached destination no longer exists! Clearing ghost nodes.");
+                  localStorage.removeItem('maya_nav_state');
+                }
+              }
+            } catch (e) { localStorage.removeItem('maya_nav_state'); }
         }
       } catch (err) {
         console.error('Failed to load locations', err);
@@ -219,6 +239,7 @@ function App() {
     if (!text?.trim()) return;
 
     if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
       const unlock = new SpeechSynthesisUtterance('');
       unlock.volume = 0;
       window.speechSynthesis.speak(unlock);
@@ -254,61 +275,86 @@ function App() {
       setIsThinking(false);
       let fullText = '';
       let speechBuffer = '';
+      let chunkBuffer = '';
+      let fallbackTimeout = null;
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
         
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        chunkBuffer += decoder.decode(value, { stream: true });
         
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.slice(6).trim();
-            if (dataStr === '[DONE]' || !dataStr) continue;
-            try {
-              const data = JSON.parse(dataStr);
-              if (data.text) {
-                fullText += data.text;
-                speechBuffer += data.text;
-                setChatHistory((prev) => prev.map(msg => 
-                  msg.id === msgId ? { ...msg, text: fullText } : msg
-                ));
-                
-                // Trigger speech on sentence boundaries
-                if (speechBuffer.match(/[.!?]\s/)) {
-                  if ('speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance(speechBuffer);
-                    utterance.rate = 1.0;
-                    utterance.onstart = () => setIsPlaying(true);
-                    utterance.onend = () => setIsPlaying(false);
-                    window.speechSynthesis.speak(utterance);
+        let boundary = chunkBuffer.indexOf('\n\n');
+        while (boundary !== -1) {
+          const chunkStr = chunkBuffer.slice(0, boundary);
+          chunkBuffer = chunkBuffer.slice(boundary + 2);
+          
+          const lines = chunkStr.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const dataStr = line.slice(6).trim();
+              if (dataStr === '[DONE]' || !dataStr) continue;
+              try {
+                const data = JSON.parse(dataStr);
+                if (data.text) {
+                  fullText += data.text;
+                  speechBuffer += data.text;
+                  setChatHistory((prev) => prev.map(msg => 
+                    msg.id === msgId ? { ...msg, text: fullText } : msg
+                  ));
+                  
+                  // Trigger speech on sentence boundaries
+                  if (speechBuffer.match(/[.!?]\s/)) {
+                    if ('speechSynthesis' in window) {
+                      const utterance = new SpeechSynthesisUtterance(speechBuffer);
+                      utterance.rate = 1.0;
+                      utterance.onstart = () => {
+                        setIsPlaying(true);
+                        clearTimeout(fallbackTimeout);
+                        const expectedDuration = utterance.text.length * 100 + 2000;
+                        fallbackTimeout = setTimeout(() => setIsPlaying(false), expectedDuration);
+                      };
+                      utterance.onend = () => {
+                        clearTimeout(fallbackTimeout);
+                        setIsPlaying(false);
+                      };
+                      window.speechSynthesis.speak(utterance);
+                    }
+                    speechBuffer = '';
                   }
-                  speechBuffer = '';
                 }
-              }
-              if (data.route && data.route.coordinates?.length >= 2) {
-                const pathData = data.route.coordinates.map((c, i) => ({
-                  lat: c[0], lng: c[1],
-                  label: data.route.steps?.[i] || `Step ${i + 1}`,
-                  id: `wp_${i}`,
-                }));
-                setCurrentRoute(pathData);
-                setRouteDistance(data.route.distance || 0);
-                setRouteSteps(data.route.steps || []);
-                setRouteStatus('active');
-                setMapVisible(true);
-              }
-            } catch (e) { /* ignore parse errors for partial chunks */ }
+                if (data.route && data.route.coordinates?.length >= 1) {
+                  const pathData = data.route.coordinates.map((c, i) => ({
+                    lat: c[0], lng: c[1],
+                    label: data.route.steps?.[i] || `Step ${i + 1}`,
+                    id: `wp_${i}`,
+                  }));
+                  setCurrentRoute(pathData);
+                  setRouteDistance(data.route.distance || 0);
+                  setRouteSteps(data.route.steps || []);
+                  setRouteStatus('active');
+                  setMapVisible(true);
+                }
+              } catch (e) { /* ignore parse errors for partial chunks */ }
+            }
           }
+          boundary = chunkBuffer.indexOf('\n\n');
         }
       }
       
       if (speechBuffer.trim() && 'speechSynthesis' in window) {
          const utterance = new SpeechSynthesisUtterance(speechBuffer);
          utterance.rate = 1.0;
-         utterance.onstart = () => setIsPlaying(true);
-         utterance.onend = () => setIsPlaying(false);
+         utterance.onstart = () => {
+           setIsPlaying(true);
+           clearTimeout(fallbackTimeout);
+           const expectedDuration = utterance.text.length * 100 + 2000;
+           fallbackTimeout = setTimeout(() => setIsPlaying(false), expectedDuration);
+         };
+         utterance.onend = () => {
+           clearTimeout(fallbackTimeout);
+           setIsPlaying(false);
+         };
          window.speechSynthesis.speak(utterance);
       }
 
@@ -375,8 +421,14 @@ function App() {
     requestRoute(location || '', locId);
   }, [location, requestRoute]);
 
+  const recalcTimeoutRef = useRef(null);
+
   const handleRecalculate = useCallback(async (dist) => {
-    if (!destination) return;
+    if (!destination || recalcTimeoutRef.current) return;
+    
+    // Throttle iOS Safari GPS tsunami
+    recalcTimeoutRef.current = setTimeout(() => { recalcTimeoutRef.current = null; }, 5000);
+
     setIsRecalculating(true);
     setTimeout(() => setIsRecalculating(false), 4000);
     const msg = {
@@ -462,14 +514,16 @@ function App() {
         )}
       </div>
 
-      <CampusMap
-        currentId={location}
-        destinationId={destination}
-        locations={campusLocations}
-        pois={campusPoi}
-        currentRoute={currentRoute}
-        currentCoords={currentCoords}
-      />
+      <ErrorBoundary>
+        <CampusMap
+          currentId={location}
+          destinationId={destination}
+          locations={campusLocations}
+          pois={campusPoi}
+          currentRoute={currentRoute}
+          currentCoords={currentCoords}
+        />
+      </ErrorBoundary>
 
       <FloorPlanView
         locationId={location}

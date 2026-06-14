@@ -55,7 +55,7 @@ export default function ETAOverlay({ visible, currentRoute, onCancel }) {
     }
   }, [latitude, longitude, visible, dest]);
 
-  if (!visible || (!eta && !distance && currentRoute?.length < 2)) return null;
+  if (!visible || (eta === null && distance === null && currentRoute?.length < 2)) return null;
 
   const displayDist = distance || 0;
   const distStr = displayDist >= 1000

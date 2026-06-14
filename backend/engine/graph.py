@@ -14,7 +14,7 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     a = math.sin(delta_phi / 2.0) ** 2 + \
         math.cos(phi1) * math.cos(phi2) * \
         math.sin(delta_lambda / 2.0) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(max(0, 1 - a)))
 
     return R * c
 
@@ -39,11 +39,13 @@ def extract_pois():
         geom_type = feature.get('geometry', {}).get('type')
         coords = feature.get('geometry', {}).get('coordinates', [])
         
-        # Handle both Points and Polygons (take the first point of the polygon)
+        # Handle both Points and Polygons (calculate centroid for polygons)
         if geom_type == 'Point':
             lng, lat = coords[0], coords[1]
         elif geom_type == 'Polygon' and len(coords) > 0 and len(coords[0]) > 0:
-            lng, lat = coords[0][0][0], coords[0][0][1] # Rough center/anchor point
+            poly_coords = coords[0]
+            lng = sum(c[0] for c in poly_coords) / len(poly_coords)
+            lat = sum(c[1] for c in poly_coords) / len(poly_coords)
         else:
             continue
             
@@ -274,12 +276,8 @@ def find_nearest_node(lat, lng):
         dlat = math.radians(n['lat'] - lat)
         dlng = math.radians(n['lng'] - lng)
         a = math.sin(dlat/2)**2 + math.cos(math.radians(lat)) * math.cos(math.radians(n['lat'])) * math.sin(dlng/2)**2
-        d = 6371000 * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        d = 6371000 * 2 * math.atan2(math.sqrt(a), math.sqrt(max(0, 1-a)))
         if d < best_dist:
             best_dist = d
             best = n
     return best
-
-def reload():
-    global _nodes, _edges, _adj, _node_map, _pois_from_geojson, _geojson_cache
-    _nodes = _edges = _adj = _node_map = _pois_from_geojson = _geojson_cache = None

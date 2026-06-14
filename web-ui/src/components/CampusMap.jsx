@@ -55,13 +55,20 @@ export default function CampusMap({ currentId, destinationId, locations, pois, c
     };
   }, [currentRoute]);
 
+  const prevDestRef = useRef(null);
+
   // Fit bounds when route changes
   useEffect(() => {
     if (currentRoute && currentRoute.length >= 2 && mapRef.current) {
-      const map = mapRef.current.getMap();
-      const coordinates = currentRoute
-        .filter((n) => n.lat && n.lng)
-        .map((n) => [n.lng, n.lat]);
+      const destNode = currentRoute[currentRoute.length - 1];
+      const destId = destNode?.id || `${destNode?.lat},${destNode?.lng}`;
+      
+      if (prevDestRef.current !== destId) {
+        prevDestRef.current = destId;
+        const map = mapRef.current.getMap();
+        const coordinates = currentRoute
+          .filter((n) => n.lat && n.lng)
+          .map((n) => [n.lng, n.lat]);
         
       if (coordinates.length >= 2) {
         // Calculate bounds
@@ -85,6 +92,7 @@ export default function CampusMap({ currentId, destinationId, locations, pois, c
           maxZoom: 17,
           duration: 1000
         });
+      }
       }
     }
   }, [currentRoute]);

@@ -26,7 +26,7 @@ async def generate_response(req: ChatRequest):
         return StreamingResponse(err_gen(), media_type="text/event-stream")
 
     npc = 'maya'
-    history = state.get_or_create_session(req.session_id, npc)
+    history = await state.get_or_create_session(req.session_id, npc)
     system_prompt = state.NPC_PROMPTS.get(npc, "You are Maya, a helpful campus guide.")
 
     location_note = f"The user is at: {req.location.replace('_', ' ').title()}" if req.location else ''
@@ -107,26 +107,29 @@ async def generate_response(req: ChatRequest):
         full_text = ""
         tool_calls = []
         
-        async for chunk in response:
-            if not chunk.choices:
-                continue
-            delta = chunk.choices[0].delta
-            
-            if delta.content:
-                full_text += delta.content
-                yield f"data: {json.dumps({'text': delta.content})}\n\n"
+        try:
+            async for chunk in response:
+                if not chunk.choices:
+                    continue
+                delta = chunk.choices[0].delta
                 
-            if delta.tool_calls:
-                for tc_delta in delta.tool_calls:
-                    while len(tool_calls) <= tc_delta.index:
-                        tool_calls.append({"id": "", "type": "function", "function": {"name": "", "arguments": ""}})
-                    tc = tool_calls[tc_delta.index]
-                    if tc_delta.id:
-                        tc["id"] += tc_delta.id
-                    if tc_delta.function.name:
-                        tc["function"]["name"] += tc_delta.function.name
-                    if tc_delta.function.arguments:
-                        tc["function"]["arguments"] += tc_delta.function.arguments
+                if delta.content:
+                    full_text += delta.content
+                    yield f"data: {json.dumps({'text': delta.content})}\n\n"
+                    
+                if delta.tool_calls:
+                    for tc_delta in delta.tool_calls:
+                        while len(tool_calls) <= tc_delta.index:
+                            tool_calls.append({"id": "", "type": "function", "function": {"name": "", "arguments": ""}})
+                        tc = tool_calls[tc_delta.index]
+                        if tc_delta.id:
+                            tc["id"] += tc_delta.id
+                        if tc_delta.function.name:
+                            tc["function"]["name"] += tc_delta.function.name
+                        if tc_delta.function.arguments:
+                            tc["function"]["arguments"] += tc_delta.function.arguments
+        except (Exception, asyncio.CancelledError) as e:
+            yield f"data: {json.dumps({'text': ' [Connection Interrupted]'})}\n\n"
 
         route_data = None
         if tool_calls:
@@ -135,7 +138,10 @@ async def generate_response(req: ChatRequest):
                     try:
                         args = json.loads(tc['function']['arguments'])
                         dest = args.get('destination', '')
-                        to_node = find_node_id(dest) or dest
+                        to_node = find_node_id(dest)
+                        if not to_node:
+                            yield f"data: {json.dumps({'text': f'I could not find a location named {dest} on campus.'})}\n\n"
+                            continue
                         from_node = find_node_id(req.location) or req.location or ''
                         filters = {}
                         acc = args.get('accessibility', 'none')
@@ -181,7 +187,7 @@ async def generate_response(req: ChatRequest):
         if len(history) > 10:
             del history[:-10]
             
-        state.save_session(req.session_id, npc, history)
+        await state.save_session(req.session_id, npc, history)
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")

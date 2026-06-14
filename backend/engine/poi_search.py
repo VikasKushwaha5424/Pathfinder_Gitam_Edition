@@ -22,14 +22,14 @@ def search(query):
             
         # Substring or high similarity
         name_ratio = difflib.SequenceMatcher(None, q, poi['name'].lower()).ratio()
-        if q in poi['name'].lower() or name_ratio > 0.8:
+        if (len(q) >= 3 and q in poi['name'].lower()) or name_ratio > 0.8:
             results.append(poi)
             continue
             
         # Check aliases
         for alias in poi.get('aliases', []):
             alias_ratio = difflib.SequenceMatcher(None, q, alias.lower()).ratio()
-            if q in alias.lower() or alias_ratio > 0.8:
+            if (len(q) >= 3 and q in alias.lower()) or alias_ratio > 0.8:
                 results.append(poi)
                 break
                 

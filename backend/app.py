@@ -46,6 +46,8 @@ app.add_middleware(
 
 class TokenAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        if request.method == "OPTIONS":
+            return await call_next(request)
         if request.url.path in ["/generate", "/transcribe"]:
             token = request.headers.get("x-api-key")
             if token != "maya_secret_token":

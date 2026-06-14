@@ -4,6 +4,9 @@ from tinydb import TinyDB, Query
 groq_client = None
 groq_model = "llama-3.3-70b-versatile"
 
+# TinyDB is not thread-safe for asyncio, so we serialize access
+db_lock = asyncio.Lock()
+
 NPC_PROMPTS = {
     'maya': (
         "You are Maya, the official GITAM University campus HUD assistant. "
@@ -22,27 +25,29 @@ NPC_VOICES = {
 DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'sessions.json')
 db = TinyDB(DB_PATH)
 
-def get_or_create_session(session_id, npc_id='maya'):
+async def get_or_create_session(session_id, npc_id='maya'):
     now = time.time()
     Session = Query()
-    record = db.search(Session.session_id == session_id)
-    if not record:
-        new_record = {'session_id': session_id, 'data': {npc_id: []}, 'created': now, 'last_active': now}
-        db.insert(new_record)
-        return []
-    
-    mem = record[0]
-    db.update({'last_active': now}, Session.session_id == session_id)
-    return mem['data'].get(npc_id, [])
-
-def save_session(session_id, npc_id, history):
-    now = time.time()
-    Session = Query()
-    record = db.search(Session.session_id == session_id)
-    if record:
+    async with db_lock:
+        record = db.search(Session.session_id == session_id)
+        if not record:
+            new_record = {'session_id': session_id, 'data': {npc_id: []}, 'created': now, 'last_active': now}
+            db.insert(new_record)
+            return []
+        
         mem = record[0]
-        mem['data'][npc_id] = history
-        db.update({'data': mem['data'], 'last_active': now}, Session.session_id == session_id)
+        db.update({'last_active': now}, Session.session_id == session_id)
+        return mem['data'].get(npc_id, [])
+
+async def save_session(session_id, npc_id, history):
+    now = time.time()
+    Session = Query()
+    async with db_lock:
+        record = db.search(Session.session_id == session_id)
+        if record:
+            mem = record[0]
+            mem['data'][npc_id] = history
+            db.update({'data': mem['data'], 'last_active': now}, Session.session_id == session_id)
 
 async def clean_old_sessions():
     while True:
@@ -50,11 +55,11 @@ async def clean_old_sessions():
             await asyncio.sleep(300)
             now = time.time()
             Session = Query()
-            # Find stale sessions (older than 2 hours = 7200 seconds)
-            stale = db.search(Session.last_active < now - 7200)
-            if stale:
-                stale_ids = [s['session_id'] for s in stale]
-                db.remove(Session.session_id.one_of(stale_ids))
-                print(f"[GC] Cleaned {len(stale)} stale sessions from TinyDB")
+            async with db_lock:
+                stale = db.search(Session.last_active < now - 7200)
+                if stale:
+                    stale_ids = [s['session_id'] for s in stale]
+                    db.remove(Session.session_id.one_of(stale_ids))
+                    print(f"[GC] Cleaned {len(stale)} stale sessions from TinyDB")
         except Exception as e:
             print(f"[GC] Error in session cleaner: {e}")
