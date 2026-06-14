@@ -229,47 +229,92 @@ function App() {
     setIsThinking(true);
 
     try {
-      const res = await axios.post(`${API_BASE}/generate`, {
-        text,
-        session_id: sessionIdRef.current || 'default',
-        location: location || '',
-        user_lat: latitude,
-        user_lng: longitude,
-      }, { timeout: 15000 });
+      const msgId = Date.now() + 1;
+      setChatHistory((prev) => [...prev, { id: msgId, sender: 'ai', text: '', npc: 'maya' }]);
+      
+      const res = await fetch(`${API_BASE}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': 'maya_secret_token' },
+        body: JSON.stringify({
+          text,
+          session_id: sessionIdRef.current || 'default',
+          location: location || '',
+          user_lat: latitude,
+          user_lng: longitude,
+        })
+      });
 
-      const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-      const reply = data.text_response || data.text || '';
-
-      setChatHistory((prev) => [...prev, { id: Date.now() + 1, sender: 'ai', text: reply, npc: 'maya' }]);
-
-      if (reply && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(reply);
-        utterance.rate = 1.0;
-        utterance.onstart = () => setIsPlaying(true);
-        utterance.onend = () => setIsPlaying(false);
-        window.speechSynthesis.speak(utterance);
+      if (!res.ok) {
+        throw new Error('Connection error');
       }
 
-      if (data.route?.coordinates?.length >= 2) {
-        const pathData = data.route.coordinates.map((c, i) => ({
-          lat: c[0], lng: c[1],
-          label: data.route.steps?.[i] || `Step ${i + 1}`,
-          id: `wp_${i}`,
-        }));
-        setCurrentRoute(pathData);
-        setRouteDistance(data.route.distance || 0);
-        setRouteSteps(data.route.steps || []);
-        setRouteStatus('active');
-        setMapVisible(true);
-      }
-
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      
       setIsThinking(false);
+      let fullText = '';
+      let speechBuffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === '[DONE]' || !dataStr) continue;
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.text) {
+                fullText += data.text;
+                speechBuffer += data.text;
+                setChatHistory((prev) => prev.map(msg => 
+                  msg.id === msgId ? { ...msg, text: fullText } : msg
+                ));
+                
+                // Trigger speech on sentence boundaries
+                if (speechBuffer.match(/[.!?]\s/)) {
+                  if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(speechBuffer);
+                    utterance.rate = 1.0;
+                    utterance.onstart = () => setIsPlaying(true);
+                    utterance.onend = () => setIsPlaying(false);
+                    window.speechSynthesis.speak(utterance);
+                  }
+                  speechBuffer = '';
+                }
+              }
+              if (data.route && data.route.coordinates?.length >= 2) {
+                const pathData = data.route.coordinates.map((c, i) => ({
+                  lat: c[0], lng: c[1],
+                  label: data.route.steps?.[i] || `Step ${i + 1}`,
+                  id: `wp_${i}`,
+                }));
+                setCurrentRoute(pathData);
+                setRouteDistance(data.route.distance || 0);
+                setRouteSteps(data.route.steps || []);
+                setRouteStatus('active');
+                setMapVisible(true);
+              }
+            } catch (e) { /* ignore parse errors for partial chunks */ }
+          }
+        }
+      }
+      
+      if (speechBuffer.trim() && 'speechSynthesis' in window) {
+         const utterance = new SpeechSynthesisUtterance(speechBuffer);
+         utterance.rate = 1.0;
+         utterance.onstart = () => setIsPlaying(true);
+         utterance.onend = () => setIsPlaying(false);
+         window.speechSynthesis.speak(utterance);
+      }
+
     } catch (err) {
       setIsThinking(false);
-      const errMsg = err.response?.status === 429
-        ? 'AI Quota Exhausted. Using offline mode.'
-        : 'Connection error. Is the backend running?';
+      const errMsg = 'Connection error. Is the backend running?';
       setChatHistory((prev) => [...prev, { id: Date.now(), sender: 'ai', text: errMsg, npc: 'maya' }]);
     }
   }, [location, latitude, longitude]);
@@ -305,6 +350,23 @@ function App() {
     setRouteStatus('idle');
     setDestination(null);
     try { localStorage.removeItem('maya_nav_state'); } catch { /* localStorage unavailable */ }
+  }, []);
+
+  const handleCalibrateCompass = useCallback(async () => {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission === 'granted') {
+          alert('Compass calibrated successfully!');
+        } else {
+          alert('Compass access denied.');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      alert('Calibration not needed or unsupported on this device.');
+    }
   }, []);
 
   const handleClassNavigate = useCallback((locId) => {
@@ -375,6 +437,8 @@ function App() {
           {routeStatus !== 'idle' && (
             <button className="hud-btn cancel-nav" onClick={handleCancelRoute} title="Cancel navigation">✕</button>
           )}
+
+          <button className="hud-btn" onClick={handleCalibrateCompass} title="Calibrate Compass">🧭</button>
 
           {hasFloorPlan(location) && (
             <button

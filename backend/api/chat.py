@@ -21,7 +21,9 @@ class ChatRequest(BaseModel):
 @router.post('/generate')
 async def generate_response(req: ChatRequest):
     if not req.text.strip():
-        return {'text_response': "I didn't hear anything — could you say that again?", 'route': None}
+        async def err_gen():
+            yield f"data: {json.dumps({'text': 'I didn\'t hear anything — could you say that again?', 'route': None})}\n\n"
+        return StreamingResponse(err_gen(), media_type="text/event-stream")
 
     npc = 'maya'
     history = state.get_or_create_session(req.session_id, npc)
@@ -59,96 +61,127 @@ async def generate_response(req: ChatRequest):
     messages.append({'role': 'user', 'content': user_prompt})
 
     import asyncio
-    max_retries = 3
-    response = None
     
-    for attempt in range(max_retries):
-        try:
-            response = await state.groq_client.chat.completions.create(
-                model=state.groq_model,
-                messages=messages,
-                temperature=0.7,
-                max_tokens=300,
-                tools=[NAVIGATE_TOOL],
-                tool_choice='auto',
-            )
-            break
-        except BadRequestError as e:
-            err_body = str(e.body).lower() if e.body else ''
-            is_tool_fail = 'tool_use_failed' in err_body or 'failed_generation' in err_body
-            if is_tool_fail:
+    async def event_generator():
+        max_retries = 3
+        response = None
+        
+        for attempt in range(max_retries):
+            try:
                 response = await state.groq_client.chat.completions.create(
                     model=state.groq_model,
                     messages=messages,
                     temperature=0.7,
                     max_tokens=300,
+                    tools=[NAVIGATE_TOOL],
+                    tool_choice='auto',
+                    stream=True,
                 )
                 break
-            else:
-                raise HTTPException(500, detail=str(e))
-        except Exception as e:
-            err = str(e).lower()
-            if '429' in err or 'quota' in err or 'exhausted' in err or 'rate limit' in err:
-                if attempt == max_retries - 1:
-                    return {'text_response': "The network is a bit crowded, give me a second.", 'route': None}
-                await asyncio.sleep(0.5 * (2 ** attempt))
-            else:
-                import traceback
-                traceback.print_exc()
-                raise HTTPException(500, detail=str(e))
-                
-    if not response:
-        return {'text_response': "The network is a bit crowded, give me a second.", 'route': None}
+            except Exception as e:
+                err = str(e).lower()
+                if '429' in err or 'quota' in err or 'exhausted' in err or 'rate limit' in err:
+                    if attempt == max_retries - 1:
+                        yield f"data: {json.dumps({'text': 'The network is a bit crowded, give me a second.'})}\n\n"
+                        return
+                    await asyncio.sleep(0.5 * (2 ** attempt))
+                else:
+                    try:
+                        # Fallback without tools if tool_use_failed
+                        response = await state.groq_client.chat.completions.create(
+                            model=state.groq_model,
+                            messages=messages,
+                            temperature=0.7,
+                            max_tokens=300,
+                            stream=True,
+                        )
+                        break
+                    except:
+                        yield f"data: {json.dumps({'text': 'Sorry, I am having trouble connecting to my brain.'})}\n\n"
+                        return
+                        
+        if not response:
+            yield f"data: {json.dumps({'text': 'The network is a bit crowded, give me a second.'})}\n\n"
+            return
 
-    choice = response.choices[0].message
-    reply_text = choice.content or ''
-    route_data = None
-
-    if choice.tool_calls:
-        for tc in choice.tool_calls:
-            if tc.function.name == 'find_route':
-                try:
-                    args = json.loads(tc.function.arguments)
-                    dest = args.get('destination', '')
-                    to_node = find_node_id(dest) or dest
-                    from_node = find_node_id(req.location) or req.location or ''
-                    filters = {}
-                    acc = args.get('accessibility', 'none')
-                    if acc == 'wheelchair':
-                        filters['wheelchair'] = True
-                    elif acc == 'no_stairs':
-                        filters['noStairs'] = True
-                    elif acc == 'no_keycard':
-                        filters['noKeycard'] = True
-                    result = find_path(from_node, to_node, filters)
-                    if result['path']:
-                        coords = [[p['lat'], p['lng']] for p in result['path']]
-                        route_data = {
-                            'from': from_node,
-                            'to': to_node,
-                            'coordinates': coords,
-                            'distance': result['distance'],
-                            'steps': result['steps'],
-                        }
-                        if not reply_text:
-                            loc_name = dest.replace('_', ' ').title()
-                            steps_text = '. '.join(result['steps'])
-                            reply_text = f"Pinging {loc_name} on your HUD. {steps_text}. Total distance: {result['distance']} meters."
-                    history.append({
-                        'role': 'tool',
-                        'content': json.dumps({'distance': result.get('distance', 0), 'steps': result.get('steps', [])}),
-                        'tool_call_id': tc.id,
-                    })
-                except Exception:
-                    import traceback
-                    traceback.print_exc()
-
-    history.append({'role': 'user', 'content': req.text})
-    assistant_msg = choice.model_dump(exclude_none=True)
-    history.append(assistant_msg)
-    if len(history) > 10:
-        del history[:-10]
+        full_text = ""
+        tool_calls = []
         
-    state.save_session(req.session_id, npc, history)
+        async for chunk in response:
+            if not chunk.choices:
+                continue
+            delta = chunk.choices[0].delta
+            
+            if delta.content:
+                full_text += delta.content
+                yield f"data: {json.dumps({'text': delta.content})}\n\n"
+                
+            if delta.tool_calls:
+                for tc_delta in delta.tool_calls:
+                    while len(tool_calls) <= tc_delta.index:
+                        tool_calls.append({"id": "", "type": "function", "function": {"name": "", "arguments": ""}})
+                    tc = tool_calls[tc_delta.index]
+                    if tc_delta.id:
+                        tc["id"] += tc_delta.id
+                    if tc_delta.function.name:
+                        tc["function"]["name"] += tc_delta.function.name
+                    if tc_delta.function.arguments:
+                        tc["function"]["arguments"] += tc_delta.function.arguments
 
-    return {'text_response': reply_text, 'route': route_data}
+        route_data = None
+        if tool_calls:
+            for tc in tool_calls:
+                if tc['function']['name'] == 'find_route':
+                    try:
+                        args = json.loads(tc['function']['arguments'])
+                        dest = args.get('destination', '')
+                        to_node = find_node_id(dest) or dest
+                        from_node = find_node_id(req.location) or req.location or ''
+                        filters = {}
+                        acc = args.get('accessibility', 'none')
+                        if acc == 'wheelchair':
+                            filters['wheelchair'] = True
+                        elif acc == 'no_stairs':
+                            filters['noStairs'] = True
+                        elif acc == 'no_keycard':
+                            filters['noKeycard'] = True
+                            
+                        from fastapi.concurrency import run_in_threadpool
+                        result = await run_in_threadpool(find_path, from_node, to_node, filters)
+                        
+                        if result['path']:
+                            coords = [[p['lat'], p['lng']] for p in result['path']]
+                            route_data = {
+                                'from': from_node,
+                                'to': to_node,
+                                'coordinates': coords,
+                                'distance': result['distance'],
+                                'steps': result['steps'],
+                            }
+                            yield f"data: {json.dumps({'route': route_data})}\n\n"
+                            
+                            if not full_text:
+                                loc_name = dest.replace('_', ' ').title()
+                                steps_text = '. '.join(result['steps'])
+                                reply_text = f"Pinging {loc_name} on your HUD. {steps_text}. Total distance: {result['distance']} meters."
+                                full_text = reply_text
+                                yield f"data: {json.dumps({'text': reply_text})}\n\n"
+                                
+                        history.append({
+                            'role': 'tool',
+                            'content': json.dumps({'distance': result.get('distance', 0), 'steps': result.get('steps', [])}),
+                            'tool_call_id': tc['id'],
+                        })
+                    except Exception:
+                        pass
+        
+        history.append({'role': 'user', 'content': req.text})
+        if full_text:
+            history.append({'role': 'assistant', 'content': full_text})
+        if len(history) > 10:
+            del history[:-10]
+            
+        state.save_session(req.session_id, npc, history)
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

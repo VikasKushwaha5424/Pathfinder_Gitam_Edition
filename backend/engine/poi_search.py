@@ -1,22 +1,10 @@
-import json, os
 import re
+import difflib
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
-
-_pois = None
+from engine.graph import get_pois
 
 def load_pois():
-    global _pois
-    if _pois is None:
-        from engine.graph import GEOJSON_MODE
-        if GEOJSON_MODE:
-            from engine.graph import get_pois
-            _pois = get_pois()
-        else:
-            path = os.path.join(DATA_DIR, 'poi.json')
-            with open(path, 'r', encoding='utf-8') as f:
-                _pois = json.load(f)
-    return _pois
+    return get_pois()
 
 import difflib
 
@@ -83,7 +71,3 @@ def find_node_id(name):
 
 def get_all_names():
     return [poi['name'] for poi in load_pois()]
-
-def reload():
-    global _pois
-    _pois = None

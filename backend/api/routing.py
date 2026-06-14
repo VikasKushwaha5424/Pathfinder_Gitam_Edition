@@ -4,6 +4,7 @@ from typing import Optional
 
 from engine.pathfinding import find_path
 from engine.poi_search import search, find_by_name, find_node_id, get_all_names
+from fastapi.concurrency import run_in_threadpool
 
 router = APIRouter(prefix='/api')
 
@@ -32,9 +33,9 @@ async def get_route(req: RouteRequest):
 
     # Snapping logic
     if req.from_lat is not None and req.from_lng is not None:
-        result = find_path_with_snapping(req.from_lat, req.from_lng, req.to_lat, req.to_lng, to_node_id=to_id, filters=req.filters, active_route=req.active_route)
+        result = await run_in_threadpool(find_path_with_snapping, req.from_lat, req.from_lng, req.to_lat, req.to_lng, to_node_id=to_id, filters=req.filters, active_route=req.active_route)
         if result.get('error') == 'No_path_available' and req.filters:
-            fallback = find_path_with_snapping(req.from_lat, req.from_lng, req.to_lat, req.to_lng, to_node_id=to_id, filters={}, active_route=req.active_route)
+            fallback = await run_in_threadpool(find_path_with_snapping, req.from_lat, req.from_lng, req.to_lat, req.to_lng, to_node_id=to_id, filters={}, active_route=req.active_route)
             if fallback and fallback.get('path'):
                 result = {
                     'found': False, 'path': [], 'distance': 0, 'steps': [], 
@@ -48,9 +49,9 @@ async def get_route(req: RouteRequest):
         if not to_id and not (req.to_lat and req.to_lng):
             return {"found": False, "message": "to_node or to_lat/to_lng is required"}
         
-        result = find_path(from_id, to_id, req.filters)
+        result = await run_in_threadpool(find_path, from_id, to_id, req.filters)
         if result.get('error') == 'No_path_available' and req.filters:
-            fallback = find_path(from_id, to_id, {})
+            fallback = await run_in_threadpool(find_path, from_id, to_id, {})
             if fallback and fallback.get('path'):
                 result = {
                     'found': False, 'path': [], 'distance': 0, 'steps': [], 

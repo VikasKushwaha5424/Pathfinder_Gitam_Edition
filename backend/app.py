@@ -27,6 +27,9 @@ if sys.platform == "win32":
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from engine.graph import get_nodes, get_adjacency
+    get_nodes()
+    get_adjacency()
     asyncio.create_task(clean_old_sessions())
     yield
 
