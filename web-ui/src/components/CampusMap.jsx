@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect } from 'react';
+import { useRef, useState, useMemo, useEffect } from 'react';
 import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -27,6 +27,7 @@ const coreLayerStyle = {
 
 export default function CampusMap({ currentId, destinationId, locations, pois, currentRoute, currentCoords }) {
   const mapRef = useRef(null);
+  const [zoom, setZoom] = useState(15.5);
 
   const initialViewState = useMemo(() => ({
     longitude: 83.377,
@@ -108,18 +109,26 @@ export default function CampusMap({ currentId, destinationId, locations, pois, c
         minZoom={14}
         maxZoom={20}
         attributionControl={true}
+        onZoom={(e) => setZoom(e.target.getZoom())}
       >
         {/* Render POIs */}
         {pois && pois.map((poi, index) => (
-          <Marker key={`poi-${index}`} longitude={poi.lng} latitude={poi.lat} anchor="center">
-            <div 
-              style={{
-                width: '6px', height: '6px', background: '#00BCD4', 
-                border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', 
-                boxShadow: '0 0 4px #00BCD480'
-              }} 
-              title={poi.name} 
-            />
+          <Marker key={`poi-${index}`} longitude={poi.lng} latitude={poi.lat} anchor="bottom">
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none' }}>
+              <div 
+                style={{
+                  width: '6px', height: '6px', background: '#00BCD4', 
+                  border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', 
+                  boxShadow: '0 0 4px #00BCD480'
+                }} 
+                title={poi.name} 
+              />
+              {zoom >= 16.5 && <span style={{
+                fontSize: '9px', color: '#b2ebf2', marginTop: '2px',
+                textShadow: '0 0 3px #000, 0 1px 2px #000', whiteSpace: 'nowrap',
+                fontWeight: 500, letterSpacing: '0.3px'
+              }}>{poi.name}</span>}
+            </div>
           </Marker>
         ))}
 
@@ -127,15 +136,22 @@ export default function CampusMap({ currentId, destinationId, locations, pois, c
         {locations && locations.map((loc) => {
           if (!loc.lat || !loc.lng || !loc.id) return null;
           return (
-            <Marker key={`loc-${loc.id}`} longitude={loc.lng} latitude={loc.lat} anchor="center">
-              <div 
-                style={{
-                  width: '14px', height: '14px', background: '#666', 
-                  border: '2px solid rgba(255,255,255,0.6)', borderRadius: '50%', 
-                  boxShadow: '0 0 6px rgba(102,102,102,0.25)'
-                }} 
-                title={loc.name} 
-              />
+            <Marker key={`loc-${loc.id}`} longitude={loc.lng} latitude={loc.lat} anchor="bottom">
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none' }}>
+                <div 
+                  style={{
+                    width: '14px', height: '14px', background: '#666', 
+                    border: '2px solid rgba(255,255,255,0.6)', borderRadius: '50%', 
+                    boxShadow: '0 0 6px rgba(102,102,102,0.25)'
+                  }} 
+                  title={loc.name} 
+                />
+                {zoom >= 16.5 && <span style={{
+                  fontSize: '10px', color: '#fff', marginTop: '2px',
+                  textShadow: '0 0 4px #000, 0 1px 3px #000', whiteSpace: 'nowrap',
+                  fontWeight: 600, letterSpacing: '0.3px'
+                }}>{loc.name}</span>}
+              </div>
             </Marker>
           );
         })}
@@ -182,15 +198,22 @@ export default function CampusMap({ currentId, destinationId, locations, pois, c
             const found = loc || poi;
             if (!found?.lat || !found?.lng) return null;
             return (
-              <Marker longitude={found.lng} latitude={found.lat} anchor="center" style={{zIndex: 1000}}>
-                <div style={{ position: 'relative', width: '18px', height: '18px' }}>
-                  <div style={{
-                    width: '18px', height: '18px', background: '#4CAF50', 
-                    border: '3px solid #fff', borderRadius: '50%', 
-                    boxShadow: '0 0 0 3px rgba(76,175,80,0.4),0 0 12px #4CAF5060',
-                    position: 'relative', zIndex: 2
-                  }}></div>
-                  <div className="ping-ring"></div>
+              <Marker longitude={found.lng} latitude={found.lat} anchor="bottom" style={{zIndex: 1000}}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ position: 'relative', width: '18px', height: '18px' }}>
+                    <div style={{
+                      width: '18px', height: '18px', background: '#4CAF50', 
+                      border: '3px solid #fff', borderRadius: '50%', 
+                      boxShadow: '0 0 0 3px rgba(76,175,80,0.4),0 0 12px #4CAF5060',
+                      position: 'relative', zIndex: 2
+                    }}></div>
+                    <div className="ping-ring"></div>
+                  </div>
+                  {zoom >= 16.5 && <span style={{
+                    fontSize: '11px', color: '#a5d6a7', marginTop: '3px',
+                    textShadow: '0 0 4px #000, 0 1px 3px #000', whiteSpace: 'nowrap',
+                    fontWeight: 700, letterSpacing: '0.3px'
+                  }}>{found.name || 'Destination'}</span>}
                 </div>
               </Marker>
             );

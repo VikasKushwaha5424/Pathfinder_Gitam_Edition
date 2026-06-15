@@ -63,17 +63,42 @@ function App() {
 
   const routeAbortRef = useRef(null);
 
+  // --- FIX #2: Error toast state for route failures ---
+  const [routeErrorToast, setRouteErrorToast] = useState(null);
+
   const requestRoute = useCallback(async (fromNode, toNode) => {
     if (routeAbortRef.current) routeAbortRef.current.abort();
     routeAbortRef.current = new AbortController();
     const signal = routeAbortRef.current.signal;
     
+    // Look up destination coordinates for snapping fallback
+    const destLoc = campusLocations.find(l => l.id === toNode);
+    const toLat = destLoc?.lat ?? null;
+    const toLng = destLoc?.lng ?? null;
+
+    // Resolve from coordinates: use selected location's coords when manual,
+    // only fall back to live GPS when fromNode is empty (Auto Detect)
+    let fromLat = null;
+    let fromLng = null;
+    if (fromNode) {
+      const fromLoc = campusLocations.find(l => l.id === fromNode);
+      fromLat = fromLoc?.lat ?? null;
+      fromLng = fromLoc?.lng ?? null;
+    }
+    // If no manual start or location has no coords, fall back to GPS
+    if (fromLat === null || fromLng === null) {
+      fromLat = latitude;
+      fromLng = longitude;
+    }
+
     try {
       const activeRouteNodes = currentRouteRef.current ? currentRouteRef.current.map(n => n.id).filter(Boolean) : [];
       const res = await axios.post(`${API_BASE}/api/route`, {
         from_node: fromNode, to_node: toNode,
-        from_lat: latitude, from_lng: longitude,
+        from_lat: fromLat, from_lng: fromLng,
+        to_lat: toLat, to_lng: toLng,
         active_route: activeRouteNodes,
+        filters: routeFilters,
       }, { timeout: 10000, signal });
       if (signal.aborted) return null;
       const data = res.data;
@@ -83,9 +108,15 @@ function App() {
         setRouteSteps(data.steps || []);
         setRouteStatus('active');
         setMapVisible(true);
+        setRouteErrorToast(null);
         return data;
       }
+      // Backend returned but no path found — show error toast
+      const errMsg = data.message || 'No route found between these locations.';
+      setRouteErrorToast(errMsg);
+      setTimeout(() => setRouteErrorToast(null), 5000);
     } catch (err) {
+      if (signal.aborted) return null;
       console.warn('Backend route fetch failed, falling back to offline JS pathfinder...', err);
       try {
          const offlineGraphStr = localStorage.getItem('campus_graph');
@@ -98,13 +129,16 @@ function App() {
                 setRouteSteps(result.steps || []);
                 setRouteStatus('active');
                 setMapVisible(true);
+                setRouteErrorToast(null);
                 return result;
              }
          }
       } catch (offlineErr) { console.error('Offline pathfinding failed', offlineErr); }
+      setRouteErrorToast('Route request failed. Please try again.');
+      setTimeout(() => setRouteErrorToast(null), 5000);
     }
     return null;
-  }, [latitude, longitude]);
+  }, [latitude, longitude, campusLocations, routeFilters]);
 
   useEffect(() => {
     const init = async () => {
@@ -517,6 +551,13 @@ function App() {
         {isRecalculating && (
           <div className="recalc-toast">
             ⚠️ OFF ROUTE: RECALCULATING...
+          </div>
+        )}
+
+        {/* --- FIX #2: Route error toast --- */}
+        {routeErrorToast && (
+          <div className="recalc-toast" style={{ background: '#d32f2f' }}>
+            ❌ {routeErrorToast}
           </div>
         )}
 

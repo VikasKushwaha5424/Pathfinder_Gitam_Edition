@@ -29,7 +29,7 @@ class NearestRequest(BaseModel):
 async def get_route(req: RouteRequest):
     from engine.pathfinding import find_path_with_snapping
 
-    to_id = find_node_id(req.to_node) if req.to_node else None
+    to_id = (find_node_id(req.to_node) or req.to_node) if req.to_node else None
 
     # Snapping logic
     if req.from_lat is not None and req.from_lng is not None:
