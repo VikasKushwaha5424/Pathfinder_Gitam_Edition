@@ -201,7 +201,7 @@ def build_graph_from_roads():
                 best_dist = dist
                 best_node = n
         
-        if best_node and best_dist <= 50:
+        if best_node and best_dist <= 150:
             poi['node_id'] = best_node['id']
             best_node['label'] = poi['name']
         elif best_node:

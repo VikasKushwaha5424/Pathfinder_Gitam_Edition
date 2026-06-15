@@ -265,12 +265,17 @@ function App() {
     }
   }, []);
 
+  // 🛑 DISABLED: Timetable auto-routing — mock data sends routes to
+  // destinations that may not exist in map.geojson, hijacking manual navigation.
+  // Re-enable once real timetable data is connected.
+  /*
   useEffect(() => {
     if (!autoDestination || routeStatus !== 'idle') return;
     setDestination(autoDestination);
     setMapVisible(true);
     requestRoute(location || '', autoDestination);
   }, [autoDestination, location, routeStatus, requestRoute]);
+  */
 
   const handleSendText = useCallback(async (text) => {
     if (!text?.trim()) return;
@@ -608,6 +613,7 @@ function App() {
 
       <HoldToTalk onVoiceResult={handleVoiceResult} />
 
+      {/* 🛑 DISABLED: Mock timetable class banner — re-enable with real data
       {currentClass && (
         <ClassStatus
           currentClass={currentClass}
@@ -617,6 +623,7 @@ function App() {
           onDismiss={() => {}}
         />
       )}
+      */}
 
       {settingsVisible && (
         <SettingsPanel
