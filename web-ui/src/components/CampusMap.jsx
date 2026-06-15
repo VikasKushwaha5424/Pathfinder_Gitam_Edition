@@ -274,6 +274,11 @@ export default function CampusMap({ currentId, destinationId, locations, pois, c
         {/* Render Locations (zoom-filtered) */}
         {visibleLocations.map((loc) => {
           if (!loc.lat || !loc.lng || !loc.id) return null;
+          // Skip grey dot if this location is the active start, destination, or overlaps live GPS
+          const isAtGps = currentCoords?.latitude != null && currentCoords?.longitude != null &&
+            Math.abs(loc.lat - currentCoords.latitude) < 0.0001 &&
+            Math.abs(loc.lng - currentCoords.longitude) < 0.0001;
+          if (loc.id === currentId || loc.id === destinationId || isAtGps) return null;
           return (
             <Marker key={`loc-${loc.id}`} longitude={loc.lng} latitude={loc.lat} anchor="bottom">
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none' }}>
